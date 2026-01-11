@@ -1,0 +1,26 @@
+[project]
+name = "jarvis"
+version = "0.1.0"
+description = "Chatbot Agentique avec FastAPI et Ollama"
+authors = [
+    {name = "titouan", email = "titouanmok@outlook.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11,<4.0.0"
+dependencies = [
+    "fastapi (>=0.115.0)",
+    "uvicorn (>=0.32.0)", 
+    "langchain (>=0.3.0)",        
+    "langchain-ollama (>=0.2.0)", 
+    "pydantic-settings (>=2.6.0)", 
+    "langchain-core (>=1.2.7,<2.0.0)", 
+    "pytest (>=9.0.2,<10.0.0)"
+]
+
+[tool.poetry]
+package-mode = false  # <--- INDISPENSABLE pour votre architecture
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
