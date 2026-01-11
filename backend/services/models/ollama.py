@@ -7,7 +7,7 @@ class OllamaModel(ModelFactory):
         self,
         model: str = "qwen3:14b",
         temperature: float = 0.8,
-        format: Optional[Union[Literal["", "json"], Dict[str, Any]]] = "json",
+        format: Optional[Union[Literal["", "json"], Dict[str, Any]]] = "",
         keep_alive: Optional[Union[str, int]] = None,
         num_ctx: Optional[int] = None,
         num_predict: Optional[int] = None,

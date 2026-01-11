@@ -22,8 +22,6 @@ class MistralModel(ModelFactory):
         Référence: https://api.python.langchain.com/en/latest/chat_models/langchain_mistralai.chat_models.ChatMistralAI.html
         """
         model_kwargs = kwargs.pop("model_kwargs", {})
-
-        print(api_key)
         return ChatMistralAI(
             model=model, # type: ignore
             temperature=temperature,
