@@ -15,7 +15,8 @@ dependencies = [
     "langchain-ollama (>=0.2.0)", 
     "pydantic-settings (>=2.6.0)", 
     "langchain-core (>=1.2.7,<2.0.0)", 
-    "pytest (>=9.0.2,<10.0.0)"
+    "pytest (>=9.0.2,<10.0.0)", 
+    "langchain-mistralai (>=1.1.1,<2.0.0)"
 ]
 
 [tool.poetry]

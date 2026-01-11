@@ -1,0 +1,1 @@
+MODELS_NAMES = {"qwen3:14b"}
