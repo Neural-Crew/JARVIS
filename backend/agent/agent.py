@@ -1,17 +1,22 @@
-import sys
 import os
+import sys
+
 from dotenv import load_dotenv
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import AIMessage, HumanMessage
+
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
+from backend.tools.ecowatch import get_environmental_data
+
 load_dotenv()
 
 # Instantation du modèle et de l'agent
 model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0)
 #model = OllamaModel().get_model(temperature=0)
-agent = create_agent(model=model, tools=[])
+agent = create_agent(model=model, tools=[get_environmental_data])
 
 
 async def stream_chat(history: list[dict]):
