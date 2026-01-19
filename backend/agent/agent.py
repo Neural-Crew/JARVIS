@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from langchain.agents import create_agent
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
 load_dotenv()
@@ -13,19 +13,26 @@ model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperatu
 #model = OllamaModel().get_model(temperature=0)
 agent = create_agent(model=model, tools=[])
 
-if __name__ == "__main__":
-    chat_history = []
-    
-    while True:
-        user_input = input("User: ")
-        if user_input.lower() in ["q", "quit"]: break
-        
-        # On ajoute le message de l'utilisateur à l'historique
-        chat_history.append(HumanMessage(content=user_input))     
-        # On invoque l'agent avec l'historique actuel
-        result = agent.invoke({"messages": chat_history})   
-        # On récupère la réponse de l'IA (dernier message dans l'état retourné)
-        last_message = result["messages"][-1]
-        print(f"AI: {last_message.content}")
+
+async def stream_chat(history: list[dict]):
+    """
+    Gère la conversation, transforme l'historique brut en messages LangChain, invoque l'agent et stream la réponse token par token.
+
+    Args:
+        history (list[dict]): Liste des messages au format `{"role": "user"|"assistant", "content": "..."}`.
+
+    Yields:
+        str: Les fragments de texte générés par le modèle (tokens).
+    """
+    lc_messages = [
+        HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
+        for m in history
+    ]
+    async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
+        if event["event"] == "on_chat_model_stream":
+            chunk = event["data"].get("chunk")
+            if chunk and chunk.content:
+                yield chunk.content
+
         
         
