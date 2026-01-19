@@ -20,3 +20,5 @@ def test_mistral_generation(model_name):
     assert response.content
     assert "4" in str(response.content)
 
+if __name__ == "__main__":
+    sys.exit(pytest.main([__file__]))
