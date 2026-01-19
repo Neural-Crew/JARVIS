@@ -9,8 +9,8 @@ from backend.services.models.ollama import OllamaModel
 load_dotenv()
 
 # Instantation du modèle et de l'agent
-#model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0)
-model = OllamaModel().get_model(temperature=0)
+model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0)
+#model = OllamaModel().get_model(temperature=0)
 agent = create_agent(model=model, tools=[])
 
 if __name__ == "__main__":
