@@ -23,5 +23,3 @@ def test_model_generation(model_name):
     else:
         print(f"DEBUG Response content: {response.content}")
 
-if __name__ == "__main__":
-    sys.exit(pytest.main([ __file__]))
