@@ -3,6 +3,13 @@ import requests
 
 API_URL = "http://localhost:8000/chat"
 
+def iter_chat_stream(messages, api_url=API_URL, requests_module=requests):
+    with requests_module.post(api_url, json={"messages": messages}, stream=True) as r:
+        r.raise_for_status()
+        for chunk in r.iter_content(chunk_size=None, decode_unicode=True):
+            if chunk:
+                yield chunk
+
 st.title("JARVIS Chat")
 
 if "messages" not in st.session_state:
@@ -19,13 +26,9 @@ if user_input:
         st.markdown(user_input)
 
     with st.chat_message("assistant"):
-        def stream_generator():
-            with requests.post(API_URL, json={"messages": st.session_state["messages"]}, stream=True) as r:
-                r.raise_for_status()
-                for chunk in r.iter_content(chunk_size=None, decode_unicode=True):
-                    if chunk: yield chunk
-        
-        full_response = st.write_stream(stream_generator)
+        full_response = st.write_stream(
+            iter_chat_stream(st.session_state["messages"])
+        )
     
     st.session_state["messages"].append({"role": "assistant", "content": full_response})
 
