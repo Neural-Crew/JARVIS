@@ -1,0 +1,82 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 13% 10%;
+    --foreground: 220 10% 90%;
+
+    --card: 220 13% 13%;
+    --card-foreground: 220 10% 90%;
+
+    --popover: 220 13% 13%;
+    --popover-foreground: 220 10% 90%;
+
+    --primary: 152 60% 50%;
+    --primary-foreground: 220 13% 8%;
+
+    --secondary: 220 13% 18%;
+    --secondary-foreground: 220 10% 80%;
+
+    --muted: 220 13% 16%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 152 60% 50%;
+    --accent-foreground: 220 13% 8%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 20%;
+    --input: 220 13% 20%;
+    --ring: 152 60% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 220 13% 8%;
+    --sidebar-foreground: 220 10% 75%;
+    --sidebar-primary: 152 60% 50%;
+    --sidebar-primary-foreground: 220 13% 8%;
+    --sidebar-accent: 220 13% 14%;
+    --sidebar-accent-foreground: 220 10% 90%;
+    --sidebar-border: 220 13% 16%;
+    --sidebar-ring: 152 60% 50%;
+
+    --user-bubble: 220 13% 22%;
+    --assistant-bubble: 220 13% 13%;
+    --input-area: 220 13% 12%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-family: 'Inter', sans-serif;
+  }
+  code, pre {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 3px;
+  }
+}
