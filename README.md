@@ -47,10 +47,10 @@ uvicorn backend.main:app --reload
 
 Lancer le frontend (Vite) :
 ```bash
-cd frontend/frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-<img width="1917" height="861" alt="image" src="https://github.com/user-attachments/assets/646309ee-dec9-41c8-bc0e-386d06052d48" />
+
 
