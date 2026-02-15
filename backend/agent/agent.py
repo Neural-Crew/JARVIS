@@ -11,11 +11,6 @@ from langchain_core.messages import AIMessage, HumanMessage
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
 from backend.tools.ecowatch_sensors import get_all_sensor_data, get_latest_sensor_data, get_sensor_history, list_ecowatch_devices, test_ecowatch_connection
-from backend.tools.ecowatch_sensors import (get_all_sensor_data,
-                                            get_latest_sensor_data,
-                                            get_sensor_history,
-                                            list_ecowatch_devices,
-                                            test_ecowatch_connection)
 
 load_dotenv()
 
@@ -45,41 +40,45 @@ async def stream_chat(history: list[dict]):
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]
-    async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
-        event_type = event.get("event")
-        data = event.get("data", {})
-        run_id = event.get("run_id")
-        if event_type == "on_chat_model_stream":
-            chunk = data.get("chunk")
-            if chunk and chunk.content:
-                yield _to_ndjson_line({"type": "token", "content": chunk.content})
-        elif event_type == "on_tool_start":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_start",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "input": _tool_input(data),
-                }
-            )
-        elif event_type == "on_tool_end":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_end",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "output": _tool_output(data),
-                }
-            )
-        elif event_type == "on_tool_error":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_error",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "error": _tool_error(data),
-                }
-            )
+
+    try:
+        async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
+            event_type = event.get("event")
+            data = event.get("data", {})
+            run_id = event.get("run_id")
+            if event_type == "on_chat_model_stream":
+                chunk = data.get("chunk")
+                if chunk and chunk.content:
+                    yield _to_ndjson_line({"type": "token", "content": chunk.content})
+            elif event_type == "on_tool_start":
+                yield _to_ndjson_line(
+                    {
+                        "type": "tool_start",
+                        "run_id": run_id,
+                        "name": _tool_name(event),
+                        "input": _tool_input(data),
+                    }
+                )
+            elif event_type == "on_tool_end":
+                yield _to_ndjson_line(
+                    {
+                        "type": "tool_end",
+                        "run_id": run_id,
+                        "name": _tool_name(event),
+                        "output": _tool_output(data),
+                    }
+                )
+            elif event_type == "on_tool_error":
+                yield _to_ndjson_line(
+                    {
+                        "type": "tool_error",
+                        "run_id": run_id,
+                        "name": _tool_name(event),
+                        "error": _tool_error(data),
+                    }
+                )
+    except Exception as e:
+        yield _to_ndjson_line({"type": "error", "content": f"Erreur interne de l'agent: {str(e)}"})
 
 
 def _to_ndjson_line(payload: dict) -> str:
