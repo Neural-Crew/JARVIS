@@ -1,10 +1,20 @@
-from fastapi import FastAPI, Body
+from typing import AsyncGenerator, List
+
+from fastapi import Body, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
-from typing import List, AsyncGenerator
 
 from backend.agent.agent import stream_chat
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/chat")
 async def chat_endpoint(request: dict = Body(...)):
@@ -15,7 +25,7 @@ async def chat_endpoint(request: dict = Body(...)):
     messages = request.get("messages", [])
     return StreamingResponse(
         stream_chat(messages), # La méthode streamchat vient de agent.py
-        media_type="text/plain"
+        media_type="application/x-ndjson"
     )
 
 @app.get("/")
