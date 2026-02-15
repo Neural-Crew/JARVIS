@@ -55,6 +55,10 @@ htmlcov/
 # Project specific
 llms.txt
 
+# Frontend
+frontend/.vite/
+frontend/node_modules/
+
 # Frontend source libs (override generic lib/ ignore)
 !frontend/src/lib/
 !frontend/src/lib/**
