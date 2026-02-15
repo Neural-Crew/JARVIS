@@ -56,8 +56,7 @@ def get_latest_sensor_data(device_id: str, sensor_type: str = "climatrack") -> d
     - L'état actuel d'un device ECOWATCH
     
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique
-            et clé secondaire pour récupérer les données (ex: "20240313101500").
+        device_id: L'ID boitier (date de naissance du boitier), identifiant unique et clé secondaire pour récupérer les données (exemple "20240313101500").
             Différent de l'ID classique (clé primaire auto-incrémentée en base).
         sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
     
@@ -160,11 +159,10 @@ def get_sensor_history(device_id: str, start_date: str, end_date: str, sensor_ty
     - Une comparaison entre différentes dates
     
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique
-            et clé secondaire pour récupérer les données (ex: "20240313101500").
+        device_id: L'ID boitier (date de naissance du boitier), identifiant unique et clé secondaire pour récupérer les données (exemple "20240313101500").
             Différent de l'ID classique (clé primaire auto-incrémentée en base).
-        start_date: Date de début au format YYYY-MM-DD (ex: "2025-06-16")
-        end_date: Date de fin au format YYYY-MM-DD (ex: "2025-06-17")
+        start_date: Date de début au format YYYY-MM-DD (exemple "2025-06-16")
+        end_date: Date de fin au format YYYY-MM-DD (exemple "2025-06-17")
         sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
     
     Returns:
@@ -228,8 +226,7 @@ def get_all_sensor_data(device_id: str, sensor_type: str = "climatrack") -> dict
     ATTENTION: Peut retourner un grand volume de données. Pour des périodes spécifiques, utilisez plutôt get_sensor_history.
     
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique
-            et clé secondaire pour récupérer les données (ex: "20240313101500").
+        device_id: L'ID boitier (date de naissance du boitier), identifiant unique et clé secondaire pour récupérer les données (exemple "20240313101500").
             Différent de l'ID classique (clé primaire auto-incrémentée en base).
         sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
     
