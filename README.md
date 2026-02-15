@@ -40,12 +40,17 @@ Ajouter une librairie au projet
 ```bash
 poetry add <nom_de_la_librairie>
 ```
-Lancer le front :
-1er terminal : /JARVIS/
+Lancer le backend :
 ```bash
 uvicorn backend.main:app --reload
 ```
-2eme terminal : /JARVIS/frontend
+
+Lancer le frontend (Vite) :
 ```bash
-streamlit run app.py
+cd frontend
+npm install
+npm run dev
 ```
+
+
+
