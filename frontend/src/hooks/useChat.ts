@@ -182,7 +182,7 @@ export function useChat() {
                 updateAssistantMessage();
                 continue;
               }
-            } catch (parseError) {
+            } catch {
               assistantText += line;
               updateAssistantMessage();
             }
