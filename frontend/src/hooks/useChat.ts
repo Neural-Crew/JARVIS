@@ -182,9 +182,13 @@ export function useChat() {
                 updateAssistantMessage();
                 continue;
               }
-            } catch {
-              assistantText += line;
-              updateAssistantMessage();
+
+              if (evt.type === "error") {
+                throw new Error(evt.content || "Erreur inconnue provenant de l'agent");
+              }
+            } catch (e) {
+              console.warn("Erreur de parsing JSON ou message invalide:", line, e);
+              // On n'ajoute pas la ligne brute au texte pour éviter d'afficher du JSON/HTML brut
             }
           }
         }

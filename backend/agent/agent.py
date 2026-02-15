@@ -10,112 +10,69 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
-from backend.tools.ecowatch_sensors import (get_all_sensor_data,
-                                            get_latest_sensor_data,
-                                            get_sensor_history,
-                                            list_ecowatch_devices,
-                                            test_ecowatch_connection)
+from backend.tools.ecowatch_sensors import (
+    get_all_sensor_data, get_latest_sensor_data, 
+    get_sensor_history, list_ecowatch_devices, test_ecowatch_connection
+)
 
 load_dotenv()
 
-# Instantation du modèle et de l'agent
-model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0)
-#model = OllamaModel().get_model(temperature=0)
-agent = create_agent(model=model, tools=[
-    test_ecowatch_connection,
-    get_latest_sensor_data,
-    list_ecowatch_devices,
-    get_sensor_history,
-    get_all_sensor_data
+# Instanciation simplifiée des modèles
+MODELS = {
+    "mistral": lambda: MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0),
+    "ollama": lambda: OllamaModel().get_model(temperature=0),
+}
+agent = create_agent(model=MODELS["mistral"](), tools=[
+    test_ecowatch_connection, get_latest_sensor_data, 
+    list_ecowatch_devices, get_sensor_history, get_all_sensor_data
 ])
 
+def _get_val(data: dict, keys: list) -> str:
+    """Helper concis pour extraire la première valeur non-nulle d'une liste de clés"""
+    for k in keys:
+        if v := data.get(k): return str(v) if isinstance(v, (str, int, float)) else json.dumps(v, ensure_ascii=True)
+    return ""
 
 async def stream_chat(history: list[dict]):
     """
-    Gère la conversation, transforme l'historique brut en messages LangChain, invoque l'agent et stream la réponse token par token.
-
-    Args:
-        history (list[dict]): Liste des messages au format `{"role": "user"|"assistant", "content": "..."}`.
-
-    Yields:
-        str: Les fragments de texte générés par le modèle (tokens).
+    Exécute l'agent et streame la réponse (tokens + événements outils) au format NDJSON.
     """
+    # 1. Conversion de l'historique JSON -> Messages LangChain
     lc_messages = [
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]
-    async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
-        event_type = event.get("event")
-        data = event.get("data", {})
-        run_id = event.get("run_id")
-        if event_type == "on_chat_model_stream":
-            chunk = data.get("chunk")
-            if chunk and chunk.content:
-                yield _to_ndjson_line({"type": "token", "content": chunk.content})
-        elif event_type == "on_tool_start":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_start",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "input": _tool_input(data),
+
+    try:
+        # 2. Streaming des événements (version v2 de l'API astream_events)
+        async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
+            kind, data = event["event"], event.get("data", {})
+            payload = {}
+
+            # Cas A : Streaming de texte (Token par token)
+            if kind == "on_chat_model_stream" and (chunk := data.get("chunk")) and chunk.content:
+                payload = {"type": "token", "content": chunk.content}
+            
+            # Cas B : Événements liés aux outils (Start -> End/Error)
+            elif kind.startswith("on_tool_"):
+                step = kind.replace("on_", "")
+                # On ne garde que les événements pertinents pour le frontend
+                if step not in ("start", "end", "error"): continue
+                
+                payload = {
+                    "type": f"tool_{step}",
+                    "run_id": event.get("run_id"),
+                    "name": event.get("name") or data.get("tool") or "tool",
                 }
-            )
-        elif event_type == "on_tool_end":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_end",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "output": _tool_output(data),
-                }
-            )
-        elif event_type == "on_tool_error":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_error",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "error": _tool_error(data),
-                }
-            )
+                
+                # Extraction spécifique selon l'étape
+                if step == "start": payload["input"] = _get_val(data, ["input_str", "input", "inputs"])
+                elif step == "end": payload["output"] = _get_val(data, ["output", "outputs"])
+                elif step == "error": payload["error"] = _get_val(data, ["error"])
 
+            if payload:
+                yield json.dumps(payload, ensure_ascii=True) + "\n"
 
-def _to_ndjson_line(payload: dict) -> str:
-    return f"{json.dumps(payload, ensure_ascii=True)}\n"
-
-
-def _tool_name(event: dict) -> str:
-    name = event.get("name")
-    if name:
-        return name
-    data = event.get("data", {})
-    serialized = data.get("serialized", {})
-    return serialized.get("name") or data.get("tool") or "tool"
-
-
-def _tool_input(data: dict) -> str:
-    if "input_str" in data and data["input_str"] is not None:
-        return str(data["input_str"])
-    if "input" in data and data["input"] is not None:
-        return str(data["input"])
-    if "inputs" in data and data["inputs"] is not None:
-        return json.dumps(data["inputs"], ensure_ascii=True)
-    return ""
-
-
-def _tool_output(data: dict) -> str:
-    if "output" in data and data["output"] is not None:
-        return str(data["output"])
-    if "outputs" in data and data["outputs"] is not None:
-        return json.dumps(data["outputs"], ensure_ascii=True)
-    return ""
-
-
-def _tool_error(data: dict) -> str:
-    if "error" in data and data["error"] is not None:
-        return str(data["error"])
-    return ""
-
-        
-        
+    # 3. Gestion globale des erreurs pour ne pas casser le stream HTTP
+    except Exception as e:
+        yield json.dumps({"type": "error", "content": f"Erreur interne de l'agent: {str(e)}"}, ensure_ascii=True) + "\n"
