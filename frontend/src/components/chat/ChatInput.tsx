@@ -12,9 +12,14 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
 
   useEffect(() => {
     if (textareaRef.current) {
+      // Reset height to auto to get the correct scrollHeight
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height =
-        Math.min(textareaRef.current.scrollHeight, 200) + "px";
+      const scrollHeight = textareaRef.current.scrollHeight;
+      
+      // Set the height, with a minimum fallback to prevent collapse on initial render
+      // text-sm is 20px line-height + 24px padding + 2px border = ~46px
+      const newHeight = Math.min(Math.max(scrollHeight, 52), 200);
+      textareaRef.current.style.height = `${newHeight}px`;
     }
   }, [value]);
 

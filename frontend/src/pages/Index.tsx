@@ -58,10 +58,18 @@ const Index = () => {
             <EmptyState />
           ) : (
             <div className="divide-y divide-border/30">
-              {activeConversation?.messages.map((msg) => (
-                <ChatMessage key={msg.id} message={msg} />
-              ))}
-              {isLoading && <TypingIndicator />}
+              {activeConversation?.messages.map((msg, index) => {
+                const isLast = index === activeConversation.messages.length - 1;
+                const isAssistant = msg.role === "assistant";
+                
+                // Show typing indicator only when waiting for the first token of the last message from assistant
+                if (isLast && isAssistant && !msg.content && isLoading) {
+                   return <TypingIndicator key={msg.id} />;
+                }
+                
+                return <ChatMessage key={msg.id} message={msg} />;
+              })}
+              {/* Removed the global isLoading check here to avoid double rendering */}
             </div>
           )}
           <div ref={messagesEndRef} />

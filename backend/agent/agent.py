@@ -10,6 +10,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
+from backend.tools.ecowatch_sensors import get_all_sensor_data, get_latest_sensor_data, get_sensor_history, list_ecowatch_devices, test_ecowatch_connection
 from backend.tools.ecowatch_sensors import (get_all_sensor_data,
                                             get_latest_sensor_data,
                                             get_sensor_history,
