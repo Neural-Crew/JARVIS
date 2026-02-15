@@ -2,7 +2,6 @@
 .DS_Store
 .idea/
 .vscode/
-.github/
 *.swp
 *.swo
 
@@ -55,6 +54,10 @@ htmlcov/
 
 # Project specific
 llms.txt
+
+# Frontend
+frontend/.vite/
+frontend/node_modules/
 
 # Frontend source libs (override generic lib/ ignore)
 !frontend/src/lib/
