@@ -55,3 +55,7 @@ htmlcov/
 
 # Project specific
 llms.txt
+
+# Frontend source libs (override generic lib/ ignore)
+!frontend/src/lib/
+!frontend/src/lib/**
