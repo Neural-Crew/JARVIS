@@ -12,6 +12,9 @@ __pycache__/
 *.so
 .Python
 build/
+bin/
+share/
+etc/
 develop-eggs/
 dist/
 downloads/
@@ -32,6 +35,7 @@ MANIFEST
 # Environment variables
 .env
 .env.*
+pyvenv.cfg
 
 # Virtual Environments
 venv/

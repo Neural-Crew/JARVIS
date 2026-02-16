@@ -8,6 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 
+from backend.agent.tool_ndjson import ToolNdjson
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
 from backend.tools.ecowatch_sensors import (get_all_sensor_data,
@@ -47,38 +48,39 @@ async def stream_chat(history: list[dict]):
     async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
         event_type = event.get("event")
         data = event.get("data", {})
-        run_id = event.get("run_id")
+
         if event_type == "on_chat_model_stream":
             chunk = data.get("chunk")
             if chunk and chunk.content:
-                yield _to_ndjson_line({"type": "token", "content": chunk.content})
-        elif event_type == "on_tool_start":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_start",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "input": _tool_input(data),
-                }
-            )
-        elif event_type == "on_tool_end":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_end",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "output": _tool_output(data),
-                }
-            )
-        elif event_type == "on_tool_error":
-            yield _to_ndjson_line(
-                {
-                    "type": "tool_error",
-                    "run_id": run_id,
-                    "name": _tool_name(event),
-                    "error": _tool_error(data),
-                }
-            )
+                yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
+        else: yield ToolNdjson.handleEvent(event_type, event, data)
+        # elif event_type == "on_tool_start":
+        #     yield _to_ndjson_line(
+        #         {
+        #             "type": "tool_start",
+        #             "run_id": run_id,
+        #             "name": _tool_name(event),
+        #             "input": _tool_input(data),
+        #         }
+        #     )
+        # elif event_type == "on_tool_end":
+        #     yield _to_ndjson_line(
+        #         {
+        #             "type": "tool_end",
+        #             "run_id": run_id,
+        #             "name": _tool_name(event),
+        #             "output": _tool_output(data),
+        #         }
+        #     )
+        # elif event_type == "on_tool_error":
+        #     yield _to_ndjson_line(
+        #         {
+        #             "type": "tool_error",
+        #             "run_id": run_id,
+        #             "name": _tool_name(event),
+        #             "error": _tool_error(data),
+        #         }
+        #     )
 
 
 def _to_ndjson_line(payload: dict) -> str:
