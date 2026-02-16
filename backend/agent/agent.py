@@ -54,33 +54,6 @@ async def stream_chat(history: list[dict]):
             if chunk and chunk.content:
                 yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
         else: yield ToolNdjson.handleEvent(event_type, event, data)
-        # elif event_type == "on_tool_start":
-        #     yield _to_ndjson_line(
-        #         {
-        #             "type": "tool_start",
-        #             "run_id": run_id,
-        #             "name": _tool_name(event),
-        #             "input": _tool_input(data),
-        #         }
-        #     )
-        # elif event_type == "on_tool_end":
-        #     yield _to_ndjson_line(
-        #         {
-        #             "type": "tool_end",
-        #             "run_id": run_id,
-        #             "name": _tool_name(event),
-        #             "output": _tool_output(data),
-        #         }
-        #     )
-        # elif event_type == "on_tool_error":
-        #     yield _to_ndjson_line(
-        #         {
-        #             "type": "tool_error",
-        #             "run_id": run_id,
-        #             "name": _tool_name(event),
-        #             "error": _tool_error(data),
-        #         }
-        #     )
 
 
 def _to_ndjson_line(payload: dict) -> str:
