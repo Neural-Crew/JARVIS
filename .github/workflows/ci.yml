@@ -16,10 +16,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Cache Poetry and pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock', '**/pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
       - name: Install Poetry
         uses: snok/install-poetry@v1
       - name: Install dependencies
         run: poetry install
+      - name: Backend smoke check (uvicorn)
+        run: |
+          poetry run uvicorn backend.main:app --host 127.0.0.1 --port 8000 &
+          sleep 3
+          curl -fsS http://127.0.0.1:8000/ | grep '"status":"ok"'
       - name: Run backend tests
         run: poetry run pytest
 
@@ -35,9 +49,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json', 'frontend/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
       - name: Install dependencies
         run: npm install
+      - name: Frontend smoke check (dev server)
+        run: |
+          npm run dev -- --host 127.0.0.1 --port 5173 &
+          sleep 5
+          curl -fsS http://127.0.0.1:5173/ > /dev/null
       - name: Lint
         run: npm run lint
       - name: Run frontend tests
         run: npm run test
+      - name: Build frontend
+        run: npm run build

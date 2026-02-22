@@ -19,16 +19,25 @@ from backend.tools.ecowatch_sensors import (get_all_sensor_data,
 
 load_dotenv()
 
-# Instantation du modèle et de l'agent
-model = MistralModel().get_model(api_key=os.getenv("MISTRAL_API_KEY"), temperature=0)
-#model = OllamaModel().get_model(temperature=0)
-agent = create_agent(model=model, tools=[
-    test_ecowatch_connection,
-    get_latest_sensor_data,
-    list_ecowatch_devices,
-    get_sensor_history,
-    get_all_sensor_data
-])
+_agent = None
+
+
+def _get_agent():
+    global _agent
+    if _agent is None:
+        api_key = os.getenv("MISTRAL_API_KEY")
+        if not api_key:
+            raise RuntimeError("MISTRAL_API_KEY is required to use /chat")
+        model = MistralModel().get_model(api_key=api_key, temperature=0)
+        #model = OllamaModel().get_model(temperature=0)
+        _agent = create_agent(model=model, tools=[
+            test_ecowatch_connection,
+            get_latest_sensor_data,
+            list_ecowatch_devices,
+            get_sensor_history,
+            get_all_sensor_data
+        ])
+    return _agent
 
 
 async def stream_chat(history: list[dict]):
@@ -45,6 +54,7 @@ async def stream_chat(history: list[dict]):
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]
+    agent = _get_agent()
     async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
         event_type = event.get("event")
         data = event.get("data", {})

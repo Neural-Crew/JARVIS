@@ -52,5 +52,15 @@ npm install
 npm run dev
 ```
 
+## CI
+La CI (GitHub Actions) execute les tests backend et frontend sur Ubuntu.
+
+Ce qui est verifie :
+- Backend: demarrage `uvicorn` + health check sur `/`, puis `poetry run pytest`
+- Frontend: demarrage `npm run dev` + ping HTTP, puis `npm run lint`, `npm run test`, `npm run build`
+
+Note: les tests qui necessitent `MISTRAL_API_KEY` ou `ECOWATCH_API_KEY` restent en mode skip en CI.
+Le endpoint `/chat` requiert `MISTRAL_API_KEY` pour fonctionner.
+
 
 
