@@ -5,13 +5,13 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Iterator
-
+from backend.utils.singleton import Singleton
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-class SQLiteChatStore:
+class SQLiteChatStore(metaclass=Singleton):
     """Minimal SQLite storage for chat conversations and messages."""
 
     def __init__(self, db_path: str = "chat.db") -> None:
