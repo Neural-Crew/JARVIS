@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../")))
 from langchain.agents import create_agent
-from langchain_core.messages import AIMessage, HumanMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from backend.agent.tool_ndjson import ToolNdjson
 from backend.services.models.mistral import MistralModel
@@ -51,10 +51,24 @@ async def stream_chat(history: list[dict], on_token: Callable[[str], None] | Non
     Yields:
         str: Les fragments de texte générés par le modèle (tokens).
     """
+
+    # Charge le prompt système
+    system_prompt_path = os.path.join(os.path.dirname(__file__), "system_prompt.txt")
+    system_message = None
+    try:
+        with open(system_prompt_path, "r", encoding="utf-8") as f:
+            system_message = SystemMessage(content=f.read())
+    except Exception as e:
+        print(f"Error loading system prompt: {e}")
+
     lc_messages = [
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]
+
+    if system_message:
+        lc_messages.insert(0, system_message)
+
     agent = _get_agent()
     async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
         event_type = event.get("event")

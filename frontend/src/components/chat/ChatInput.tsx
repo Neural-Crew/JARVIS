@@ -18,6 +18,24 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
     }
   }, [value]);
 
+  // Force height recalculation on mount with a small delay to ensure layout is ready
+  useEffect(() => {
+    const adjustHeight = () => {
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height =
+          Math.min(textareaRef.current.scrollHeight, 200) + "px";
+      }
+    };
+    
+    // Initial adjustment
+    adjustHeight();
+
+    // Delayed adjustment to handle any layout shifts or font loading
+    const timer = setTimeout(adjustHeight, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleSubmit = () => {
     if (!value.trim() || disabled) return;
     onSend(value);
