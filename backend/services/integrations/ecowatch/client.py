@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
-
+from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
 load_dotenv()
 
 
@@ -18,7 +18,7 @@ class EcoWatchAPIError(Exception):
     pass
 
 
-class EcoWatchClient:
+class EcoWatchClient(EcowatchClientInterface):
     """
     Client pour l'API ECOWATCH.
     
@@ -185,4 +185,8 @@ class EcoWatchClient:
         return self._make_request(f"b2b/data/{table}/{device_id}/filter", params=params)
     
     def __repr__(self) -> str:
+        """
+        Methode 'underlying' de la methode __str__
+        """
+        assert self.api_key is not None
         return f"<EcoWatchClient api_key=***{self.api_key[-8:]}>"

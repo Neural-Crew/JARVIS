@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from collections.abc import Callable
 
 from dotenv import load_dotenv
 
@@ -40,7 +41,7 @@ def _get_agent():
     return _agent
 
 
-async def stream_chat(history: list[dict]):
+async def stream_chat(history: list[dict], on_token: Callable[[str], None] | None = None):
     """
     Gère la conversation, transforme l'historique brut en messages LangChain, invoque l'agent et stream la réponse token par token.
 
@@ -62,5 +63,8 @@ async def stream_chat(history: list[dict]):
         if event_type == "on_chat_model_stream":
             chunk = data.get("chunk")
             if chunk and chunk.content:
-                yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
+                token = str(chunk.content)
+                if on_token is not None:
+                    on_token(token)
+                yield ToolNdjson()._to_ndjson_line({"type": "token", "content": token})
         else: yield ToolNdjson.handleEvent(event_type, event, data)

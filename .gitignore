@@ -58,6 +58,7 @@ htmlcov/
 
 # Project specific
 llms.txt
+chat.db
 
 # Frontend
 frontend/.vite/
