@@ -178,11 +178,27 @@ class EcoWatchClient:
             ... )
             [{'id': 4583, 'timestamp': '2025-06-16T07:42:28.000Z', ...}, ...]
         """
-        params = {
-            "start": start_date,
-            "end": end_date
-        }
-        return self._make_request(f"b2b/data/{table}/{device_id}/filter", params=params)
+        from datetime import datetime
+        all_data = self._make_request(f"b2b/data/{table}/{device_id}")
+        
+        try:
+            start = datetime.strptime(start_date, "%Y-%m-%d").date()
+            end = datetime.strptime(end_date, "%Y-%m-%d").date()
+        except ValueError as e:
+            raise ValueError(f"Format de date invalide. Utilisez YYYY-MM-DD: {str(e)}")
+        
+        filtered = []
+        for record in all_data:
+            try:
+                timestamp = datetime.fromisoformat(
+                    record["timestamp"].replace("Z", "+00:00")
+                ).date()
+                if start <= timestamp <= end:
+                    filtered.append(record)
+            except (ValueError, KeyError):
+                continue
+        
+        return filtered
     
     def __repr__(self) -> str:
         return f"<EcoWatchClient api_key=***{self.api_key[-8:]}>"
