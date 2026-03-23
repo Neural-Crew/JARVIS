@@ -1,8 +1,10 @@
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Message } from "@/types/chat";
 import { motion } from "framer-motion";
 import { Bot, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessageProps {
   message: Message;
@@ -35,7 +37,23 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {isUser ? "Vous" : "Assistant"}
         </p>
         <div className="prose prose-invert prose-sm max-w-none text-foreground leading-relaxed [&_p]:mb-3 [&_code]:bg-secondary [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-primary [&_pre]:bg-secondary [&_pre]:rounded-lg [&_pre]:p-4">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: ({ node: _node, ...props }) => (
+                <div className="my-4 w-full overflow-y-auto rounded-lg border bg-card text-card-foreground">
+                  <table className="w-full caption-bottom text-sm" {...props} />
+                </div>
+              ),
+              thead: ({ node: _node, ...props }) => <TableHeader {...props} />,
+              tbody: ({ node: _node, ...props }) => <TableBody {...props} />,
+              tr: ({ node: _node, ...props }) => <TableRow {...props} />,
+              th: ({ node: _node, ...props }) => <TableHead {...props} />,
+              td: ({ node: _node, ...props }) => <TableCell {...props} />,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
         {!isUser && toolCalls.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
