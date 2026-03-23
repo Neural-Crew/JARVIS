@@ -40,16 +40,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
-              table: ({ node, ...props }) => (
+              table: ({ node: _node, ...props }) => (
                 <div className="my-4 w-full overflow-y-auto rounded-lg border bg-card text-card-foreground">
                   <table className="w-full caption-bottom text-sm" {...props} />
                 </div>
               ),
-              thead: ({ node, ...props }) => <TableHeader {...props} />,
-              tbody: ({ node, ...props }) => <TableBody {...props} />,
-              tr: ({ node, ...props }) => <TableRow {...props} />,
-              th: ({ node, ...props }) => <TableHead {...props} />,
-              td: ({ node, ...props }) => <TableCell {...props} />,
+              thead: ({ node: _node, ...props }) => <TableHeader {...props} />,
+              tbody: ({ node: _node, ...props }) => <TableBody {...props} />,
+              tr: ({ node: _node, ...props }) => <TableRow {...props} />,
+              th: ({ node: _node, ...props }) => <TableHead {...props} />,
+              td: ({ node: _node, ...props }) => <TableCell {...props} />,
             }}
           >
             {message.content}
