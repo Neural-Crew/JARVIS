@@ -11,7 +11,8 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from backend.agent.tool_ndjson import ToolNdjson
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
-from backend.tools.ecowatch_sensors import (get_all_sensor_data,
+from backend.tools.datetime_tools import get_current_datetime
+from backend.tools.ecowatch_sensors import (generate_sensor_chart,
                                             get_latest_sensor_data,
                                             get_sensor_history,
                                             list_ecowatch_devices,
@@ -31,11 +32,12 @@ def _get_agent():
         model = MistralModel().get_model(api_key=api_key, temperature=0)
         #model = OllamaModel().get_model(temperature=0)
         _agent = create_agent(model=model, tools=[
+            get_current_datetime,
             test_ecowatch_connection,
             get_latest_sensor_data,
             list_ecowatch_devices,
             get_sensor_history,
-            get_all_sensor_data
+            generate_sensor_chart,
         ])
     return _agent
 

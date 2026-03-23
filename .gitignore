@@ -58,6 +58,7 @@ htmlcov/
 
 # Project specific
 llms.txt
+.playwright-mcp/
 
 # Frontend
 frontend/.vite/

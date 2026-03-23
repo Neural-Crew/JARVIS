@@ -1,9 +1,56 @@
-import { Conversation, Message, ToolCall } from "@/types/chat";
+import { Conversation, Message, ToolCall, ToolPayload } from "@/types/chat";
 import { useCallback, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const isChartToolPayload = (value: unknown): value is ToolPayload => {
+  if (!isRecord(value)) return false;
+  return value.type === "chart" && value.chart !== undefined;
+};
+
+const hasChartPayloadEnvelope = (
+  value: unknown
+): value is { payload: ToolPayload } => {
+  if (!isRecord(value) || !("payload" in value)) return false;
+  return isChartToolPayload(value.payload);
+};
+
+const parseToolPayload = (rawOutput: string): ToolPayload | undefined => {
+  if (!rawOutput) return undefined;
+
+  const extractPayload = (candidate: unknown): ToolPayload | undefined => {
+    if (!hasChartPayloadEnvelope(candidate)) return undefined;
+    return candidate.payload;
+  };
+
+  try {
+    const parsed = JSON.parse(rawOutput);
+    const payload = extractPayload(parsed);
+    if (payload) return payload;
+  } catch {
+    // ignore and try fallback extraction below
+  }
+
+  const firstBrace = rawOutput.indexOf("{");
+  const lastBrace = rawOutput.lastIndexOf("}");
+  if (firstBrace >= 0 && lastBrace > firstBrace) {
+    const candidate = rawOutput.slice(firstBrace, lastBrace + 1);
+    try {
+      const parsed = JSON.parse(candidate);
+      const payload = extractPayload(parsed);
+      if (payload) return payload;
+    } catch {
+      return undefined;
+    }
+  }
+
+  return undefined;
+};
 
 const createConversation = (title = "Nouvelle discussion"): Conversation => ({
   id: generateId(),
@@ -159,12 +206,14 @@ export function useChat() {
 
               if (evt.type === "tool_end") {
                 const existing = toolCalls.find((t) => t.id === toolId);
+                const output = evt.output ?? "";
                 upsertToolCall({
                   id: toolId,
                   name: evt.name ?? existing?.name ?? "tool",
                   status: "success",
                   input: existing?.input ?? "",
-                  output: evt.output ?? "",
+                  output,
+                  payload: parseToolPayload(output),
                 });
                 updateAssistantMessage();
                 continue;
