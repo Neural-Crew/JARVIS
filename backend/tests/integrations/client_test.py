@@ -16,12 +16,13 @@ load_dotenv()
 
 
 # Fixture pour le client avec vraie API key
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def client():
     """Client ECOWATCH avec clé depuis .env"""
     api_key = os.getenv("ECOWATCH_API_KEY")
     if not api_key:
         pytest.skip("ECOWATCH_API_KEY non configurée dans .env")
+    EcoWatchClient._reset_instances()
     return EcoWatchClient(api_key=api_key)
 
 
@@ -29,6 +30,7 @@ def testGivenApiKeyWhenInitializeClientThenClientConfigured():
     """Given: Une clé API valide
     When: Initialisation du client
     Then: Le client est correctement configuré avec la clé"""
+    EcoWatchClient._reset_instances()
     client = EcoWatchClient(api_key="test_key")
     assert client.api_key == "test_key"
     assert client.headers["X-API-Key"] == "test_key"

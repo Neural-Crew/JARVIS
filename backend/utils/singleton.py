@@ -14,3 +14,7 @@ class Singleton(type):
         
         return cls._instances[cls]
     
+    def _reset_instances(self):
+        "This method should be used for testing only to clear the singleton"
+        "This helps with State Pollution"
+        self._instances = {}

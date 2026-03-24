@@ -238,13 +238,12 @@ def get_all_sensor_data(device_id: str, sensor_type: str = "climatrack") -> dict
         data = client.get_device_data(table=sensor_type, device_id=device_id)
         
         # Extraire des infos utiles sur la période couverte
-        timestamps = [record.get("timestamp") for record in data if record.get("timestamp")]
-        period_info = {}
-        if timestamps:
-            period_info = {
-                "first_record": min(timestamps),
-                "last_record": max(timestamps)
-            }
+        timestamps : list = [record.get("timestamp") for record in data if record.get("timestamp")]
+        
+        period_info = {
+            "first_record": min(timestamps, default=None),
+            "last_record": max(timestamps, default=None)
+        }
         
         return {
             "success": True,
