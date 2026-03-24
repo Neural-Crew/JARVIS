@@ -17,11 +17,12 @@ dependencies = [
     "langchain-core (>=1.2.7,<2.0.0)", 
     "pytest (>=9.0.2,<10.0.0)", 
     "langchain-mistralai (>=1.1.1,<2.0.0)", 
-    "streamlit (>=1.52.2,<2.0.0)"
+    "streamlit (>=1.52.2,<2.0.0)", 
+    "sqlalchemy (>=2.0.48,<3.0.0)"
 ]
 
 [tool.poetry]
-package-mode = false  # <--- INDISPENSABLE pour votre architecture
+package-mode = false  # <--- Used only for dependency management
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

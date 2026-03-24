@@ -114,6 +114,7 @@ class EcoWatchClient(EcowatchClientInterface):
             >>> client.get_devices("aquacheck")
             ['20250314140500', '20250513115530', ...]
         """
+        
         return self._make_request("b2b/devices", params={"table": table})
     
     def get_device_data(self, table: str, device_id: str) -> List[Dict[str, Any]]:
@@ -186,7 +187,7 @@ class EcoWatchClient(EcowatchClientInterface):
     
     def __repr__(self) -> str:
         """
-        Methode 'underlying' de la methode __str__
+        Methode sous-jacente de la methode __str__
         """
         assert self.api_key is not None
         return f"<EcoWatchClient api_key=***{self.api_key[-8:]}>"

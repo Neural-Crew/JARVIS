@@ -2,9 +2,7 @@ from backend.utils.singleton import Singleton
 from typing import Any, Dict, List, Optional
 
 class EcowatchClientInterface(metaclass=Singleton):
-    def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        pass
-
+    
     def test_connection(self) -> Dict[str, str] | None:
         pass
 

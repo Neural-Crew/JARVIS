@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from backend.agent.agent import stream_chat
 from backend.persistence.sqlite_store import SQLiteChatStore
-
+from backend.persistence.ecowatch_bd import Conversation, Message
 
 class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1)
@@ -27,7 +27,7 @@ def _default_db_path() -> str:
 
 
 app = FastAPI()
-store = SQLiteChatStore(db_path=os.getenv("CHAT_DB_PATH", _default_db_path()))
+store = SQLiteChatStore()
 
 app.add_middleware(
     CORSMiddleware,
@@ -52,7 +52,7 @@ async def chat_endpoint(request: ChatRequest):
     history_with_current = [*history, {"role": "user", "content": user_content}]
 
     # Persist user input before model call to keep consistent timeline.
-    store.add_message(session_id=session_id, role="user", content=user_content)
+    store.add_message(q_session_id=session_id, q_role="user", q_content=user_content)
 
     async def _stream_and_persist():
         assistant_chunks: list[str] = []
@@ -67,9 +67,9 @@ async def chat_endpoint(request: ChatRequest):
             assistant_text = "".join(assistant_chunks).strip()
             if assistant_text:
                 store.add_message(
-                    session_id=session_id,
-                    role="assistant",
-                    content=assistant_text,
+                    q_session_id=session_id,
+                    q_role="assistant",
+                    q_content=assistant_text,
                 )
 
     return StreamingResponse(_stream_and_persist(), media_type="application/x-ndjson")
