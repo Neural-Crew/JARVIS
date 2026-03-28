@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import sqlite3
-from contextlib import contextmanager
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Iterator
 from backend.utils.singleton import Singleton
-from backend.persistence.ecowatch_bd import Conversation, Message, engine
+from backend.persistence.Model.ecowatch_bd import Conversation, Message
+from backend.persistence.engine import engine
 from sqlalchemy import select, insert
 
 def _utc_now_iso() -> str:
@@ -21,7 +18,6 @@ class SQLiteChatStore(metaclass=Singleton):
             stmt = select(Conversation.id).where(Conversation.session_id==session_id)
             row = conn.execute(stmt).first()
             if row:
-                print(row)
                 return int(row[0])
             stmt = insert(Conversation).values(session_id=session_id, created_at=_utc_now_iso() )
             cur = conn.execute(stmt)

@@ -1,16 +1,13 @@
 from sqlalchemy import ForeignKey, Text, DateTime
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
 
 from typing import List
 from datetime import datetime
-
-engine = create_engine("sqlite+pysqlite:///ecowatch.db", echo=True)
 
 Base = declarative_base()
 
@@ -24,6 +21,10 @@ class Query(Base):
                                                         onupdate=func.now())
     response : Mapped[str] = mapped_column(nullable=False) 
 
+    def __repr__(self):
+        return f"query_id={self.query_id}, latest_call={self.latest_query_call}, response={self.response} "
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -32,6 +33,10 @@ class Conversation(Base):
     created_at : Mapped[str] = mapped_column(Text, nullable=False)
 
     messages : Mapped[List["Message"]] = relationship( back_populates="conversation" )
+
+    def __repr__(self):
+        return f"id={self.id}, session_id={self.session_id}, created_at={self.created_at}"
+
 
 class Message(Base):
     __tablename__ = "messages"
@@ -43,5 +48,5 @@ class Message(Base):
 
     conversation : Mapped[Conversation] = relationship( back_populates="messages" )
 
-
-Base.metadata.create_all(engine)
+    def __repr__(self):
+        return f"id={self.id}, conversation_id={self.conversation_id}, role={self.role}, content={self.content}, timestamp={self.timestamp} "

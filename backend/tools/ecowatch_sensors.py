@@ -1,7 +1,10 @@
 from langchain_core.tools import tool
 
-from backend.services.integrations.ecowatch.client import (EcoWatchAPIError,
-                                                           EcoWatchClient)
+from backend.services.integrations.ecowatch.client import EcoWatchAPIError, EcoWatchClient
+from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
+from backend.services.integrations.ecowatch.proxy import EcowatchProxy
+
+proxy = False
 
 
 @tool(parse_docstring=True)
@@ -18,7 +21,7 @@ def test_ecowatch_connection() -> dict:
         Un dictionnaire contenant le statut de la connexion et un message
     """
     try:
-        client = EcoWatchClient()
+        client : EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         result = client.test_connection()
         
         return {
@@ -66,7 +69,7 @@ def get_latest_sensor_data(device_id: str, sensor_type: str = "climatrack") -> d
         - Pour aquacheck: temperature, humidity, ground_humidity, humidex, timestamp
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         data = client.get_latest_data(table=sensor_type, device_id=device_id)
         
         return {
@@ -117,7 +120,7 @@ def list_ecowatch_devices(sensor_type: str = "climatrack") -> dict:
         Un dictionnaire contenant la liste des IDs boitier (date de naissance) et le nombre total
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         devices = client.get_devices(table=sensor_type)
         
         return {
@@ -169,7 +172,7 @@ def get_sensor_history(device_id: str, start_date: str, end_date: str, sensor_ty
         Un dictionnaire contenant la liste des mesures dans la période spécifiée
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         data = client.get_filtered_data(
             table=sensor_type,
             device_id=device_id,
@@ -234,7 +237,7 @@ def get_all_sensor_data(device_id: str, sensor_type: str = "climatrack") -> dict
         Un dictionnaire contenant toutes les mesures historiques du capteur
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         data = client.get_device_data(table=sensor_type, device_id=device_id)
         
         # Extraire des infos utiles sur la période couverte

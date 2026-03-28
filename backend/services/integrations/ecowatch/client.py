@@ -95,6 +95,7 @@ class EcoWatchClient(EcowatchClientInterface):
             >>> client.test_connection()
             {'status': 'ok', 'message': 'Connexion au backend réussie'}
         """
+        print("test conncetion", flush=True)
         return self._make_request("test-connection")
     
     def get_devices(self, table: str) -> List[str]:
