@@ -143,6 +143,8 @@ export function useChat() {
         let accumulated = "";
         let assistantText = "";
         let toolCalls: ToolCall[] = [];
+        const toolStartTimes: Record<string, number> = {};
+        const MIN_RUNNING_MS = 500;
 
         const updateAssistantMessage = () => {
           setConversations((prev) =>
@@ -194,6 +196,7 @@ export function useChat() {
 
               const toolId = evt.run_id ?? generateId();
               if (evt.type === "tool_start") {
+                toolStartTimes[toolId] = Date.now();
                 upsertToolCall({
                   id: toolId,
                   name: evt.name ?? "tool",
@@ -207,28 +210,50 @@ export function useChat() {
               if (evt.type === "tool_end") {
                 const existing = toolCalls.find((t) => t.id === toolId);
                 const output = evt.output ?? "";
-                upsertToolCall({
-                  id: toolId,
-                  name: evt.name ?? existing?.name ?? "tool",
-                  status: "success",
-                  input: existing?.input ?? "",
-                  output,
-                  payload: parseToolPayload(output),
-                });
-                updateAssistantMessage();
+                const elapsed = Date.now() - (toolStartTimes[toolId] ?? 0);
+                const delay = Math.max(0, MIN_RUNNING_MS - elapsed);
+
+                const applyEnd = () => {
+                  upsertToolCall({
+                    id: toolId,
+                    name: evt.name ?? existing?.name ?? "tool",
+                    status: "success",
+                    input: existing?.input ?? "",
+                    output,
+                    payload: parseToolPayload(output),
+                  });
+                  updateAssistantMessage();
+                };
+
+                if (delay > 0) {
+                  setTimeout(applyEnd, delay);
+                } else {
+                  applyEnd();
+                }
                 continue;
               }
 
               if (evt.type === "tool_error") {
                 const existing = toolCalls.find((t) => t.id === toolId);
-                upsertToolCall({
-                  id: toolId,
-                  name: evt.name ?? existing?.name ?? "tool",
-                  status: "error",
-                  input: existing?.input ?? "",
-                  error: evt.error ?? "",
-                });
-                updateAssistantMessage();
+                const elapsed = Date.now() - (toolStartTimes[toolId] ?? 0);
+                const delay = Math.max(0, MIN_RUNNING_MS - elapsed);
+
+                const applyError = () => {
+                  upsertToolCall({
+                    id: toolId,
+                    name: evt.name ?? existing?.name ?? "tool",
+                    status: "error",
+                    input: existing?.input ?? "",
+                    error: evt.error ?? "",
+                  });
+                  updateAssistantMessage();
+                };
+
+                if (delay > 0) {
+                  setTimeout(applyError, delay);
+                } else {
+                  applyError();
+                }
                 continue;
               }
             } catch {

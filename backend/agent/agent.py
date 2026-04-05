@@ -11,6 +11,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from backend.agent.tool_ndjson import ToolNdjson
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
+from backend.services.models.rate_limiter import mistral_rate_limiter
 from backend.tools.datetime_tools import get_current_datetime
 from backend.tools.ecowatch_sensors import (generate_sensor_chart,
                                             get_latest_sensor_data,
@@ -29,7 +30,9 @@ def _get_agent():
         api_key = os.getenv("MISTRAL_API_KEY")
         if not api_key:
             raise RuntimeError("MISTRAL_API_KEY is required to use /chat")
-        model = MistralModel().get_model(api_key=api_key, temperature=0)
+        model = MistralModel().get_model(
+            api_key=api_key, temperature=0, rate_limiter=mistral_rate_limiter
+        )
         #model = OllamaModel().get_model(temperature=0)
         _agent = create_agent(model=model, tools=[
             get_current_datetime,
@@ -71,12 +74,22 @@ async def stream_chat(history: list[dict]):
         lc_messages.insert(0, system_message)
 
     agent = _get_agent()
-    async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
-        event_type = event.get("event")
-        data = event.get("data", {})
+    try:
+        async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
+            event_type = event.get("event")
+            data = event.get("data", {})
 
-        if event_type == "on_chat_model_stream":
-            chunk = data.get("chunk")
-            if chunk and chunk.content:
-                yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
-        else: yield ToolNdjson.handleEvent(event_type, event, data)
+            if event_type == "on_chat_model_stream":
+                chunk = data.get("chunk")
+                if chunk and chunk.content:
+                    yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
+            else:
+                line = ToolNdjson.handleEvent(event_type, event, data)
+                if line:
+                    yield line
+    except Exception as e:
+        print(f"[stream_chat] Error during agent stream: {e}")
+        yield ToolNdjson()._to_ndjson_line({
+            "type": "token",
+            "content": f"\n\n⚠️ Une erreur est survenue (rate limit ou réseau). Veuillez réessayer dans quelques secondes."
+        })

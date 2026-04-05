@@ -113,9 +113,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 <HoverCard key={tool.id}>
                   <HoverCardTrigger asChild>
                     <span
-                      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 ${badgeClass}`}
+                      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 transition-colors duration-300 ${badgeClass} ${tool.status === "running" ? "animate-pulse" : ""}`}
                     >
-                      {tool.name} · {tool.status}
+                      {tool.status === "running" && (
+                        <span className="inline-block h-2 w-2 rounded-full bg-current animate-pulse" />
+                      )}
+                      {tool.name} · {tool.status === "running" ? "en cours..." : tool.status}
                     </span>
                   </HoverCardTrigger>
                   <HoverCardContent align="start" className="w-80">

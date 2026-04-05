@@ -64,7 +64,8 @@ const Index = () => {
                   isLast &&
                   isLoading &&
                   msg.role === "assistant" &&
-                  !msg.content
+                  !msg.content &&
+                  (!msg.toolCalls || msg.toolCalls.length === 0)
                 ) {
                   return <TypingIndicator key={msg.id} />;
                 }
