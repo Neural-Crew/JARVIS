@@ -32,7 +32,7 @@ jobs:
       - name: Backend smoke check (uvicorn)
         run: |
           poetry run uvicorn backend.main:app --host 127.0.0.1 --port 8000 &
-          sleep 3
+          sleep 10
           curl -fsS http://127.0.0.1:8000/ | grep '"status":"ok"'
       - name: Run backend tests
         run: poetry run pytest
