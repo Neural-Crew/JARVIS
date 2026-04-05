@@ -32,7 +32,11 @@ async def chat_endpoint(request: dict = Body(...)):
     messages = request.get("messages", [])
     return StreamingResponse(
         stream_chat(messages), # La méthode streamchat vient de agent.py
-        media_type="application/x-ndjson"
+        media_type="application/x-ndjson",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+        },
     )
 
 @app.get("/")

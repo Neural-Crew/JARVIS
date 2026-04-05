@@ -11,7 +11,7 @@ class MistralModel(ModelFactory):
         model: str = "mistral-large-latest",
         temperature: float = 0.8,
         format: Optional[Union[Literal["", "json"], Dict[str, Any]]] = "json",
-        max_retries: int = 2,
+        max_retries: int = 5,
         top_p: float = 1.0,
         disable_streaming: bool = False,
         api_key: Optional[str] = None,
