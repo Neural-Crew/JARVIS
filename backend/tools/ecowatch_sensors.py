@@ -4,7 +4,7 @@ from backend.services.integrations.ecowatch.client import EcoWatchAPIError, EcoW
 from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
 from backend.services.integrations.ecowatch.proxy import EcowatchProxy
 
-proxy = False
+proxy = True
 
 
 @tool(parse_docstring=True)
