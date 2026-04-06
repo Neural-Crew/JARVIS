@@ -1,13 +1,16 @@
 from backend.persistence.engine import engine
 from backend.utils.singleton import Singleton
 from backend.persistence.Model.ecowatch_bd import Query
-
+from backend.persistence.Model.aquacheck_model import AquacheckModel
+from backend.persistence.Model.climatrack_model import ClimatrackModel
+from backend.persistence.Model.ecowatch_model import EcowatchModel
 from typing import Callable, Any, List
 from datetime import datetime, timedelta
 from enum import Enum
 
 from sqlalchemy.orm import Session
 from sqlalchemy import select, update, insert, delete
+from threading import Lock
 
 
 class QueryIDS(Enum):
@@ -17,6 +20,8 @@ class QueryIDS(Enum):
     get_filtered_data = "get_filtered_data"
 
 class SQLiteProxy(metaclass=Singleton):
+    def __init__(self, lock = Lock()) -> None:
+        pass
 
     def check_latter_call(self, select_function : Callable[..., Any], expiry : timedelta ):
         """
@@ -59,21 +64,28 @@ class SQLiteProxy(metaclass=Singleton):
             query = conn.execute( stmt )
         return query.first() != None
 
-    def insert_OR_update_latest_query(self, query_id : QueryIDS, new_response : Any):
+    def insert_OR_update_latest_query(self, 
+                                      ecowatch_model : type[EcowatchModel], 
+                                      select_function : Callable[..., Any], 
+                                      new_response : Any,
+                                      **kwargs):
+        
         "This method should be used by the user only when"
         "the expiricy date of the request has been confirmed to not be"
         "valid"
-        if not self._check_exists(query_id):
-            stmt = insert(Query).values(query_id=query_id.value, response = new_response )
-        else:
-            stmt = (
-            update(Query)
-            .where(Query.query_id == query_id.value)
-            .values(response = new_response))
-        print(f"{'_'*20} statement: {stmt} {'_'*20}")
-        with Session(engine) as conn:
-            rows = conn.execute(stmt)
-            conn.commit()
+        ecowatch_model().set_data(select_function, new_response, **kwargs)
+        
+        # if not self._check_exists(query_id):
+        #     stmt = insert(Query).values(query_id=query_id.value, response = new_response )
+        # else:
+        #     stmt = (
+        #     update(Query)
+        #     .where(Query.query_id == query_id.value)
+        #     .values(response = new_response))
+        # print(f"{'_'*20} statement: {stmt} {'_'*20}")
+        # with Session(engine) as conn:
+        #     rows = conn.execute(stmt)
+        #     conn.commit()
         
         
 

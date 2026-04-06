@@ -1,10 +1,7 @@
-from sqlalchemy import ForeignKey, Text, DateTime
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy.orm import declarative_base
+from sqlalchemy import ForeignKey, Text, DateTime, CHAR, Float, Integer
 from sqlalchemy.sql import func
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import mapped_column, relationship, declarative_base, backref, Mapped
+
 
 from typing import List
 from datetime import datetime
@@ -15,14 +12,45 @@ class Query(Base):
     __tablename__ = "queries"
 
     query_id : Mapped[str] = mapped_column(primary_key=True)
+    table : Mapped[str] = mapped_column(primary_key=True)
+    device_ID : Mapped[str] = mapped_column( CHAR(14), nullable=True)
+    
     latest_query_call : Mapped[datetime] = mapped_column(DateTime(timezone=True), 
                                                         nullable=False, 
                                                         server_default=func.now(), 
                                                         onupdate=func.now())
-    response : Mapped[str] = mapped_column(nullable=False) 
-
+    
     def __repr__(self):
         return f"query_id={self.query_id}, latest_call={self.latest_query_call}, response={self.response} "
+
+
+class Climatrack(Base):
+    __tablename__ = "climatrack"
+
+    id : Mapped[int] = mapped_column(primary_key=True)
+    ID_boitier : Mapped[str] = mapped_column(CHAR(14), primary_key=True)
+    timestamp : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    humidity : Mapped[float] = mapped_column(Float, nullable=True)
+    temperature : Mapped[float] = mapped_column(Float, nullable=True)
+    tvoc : Mapped[int] = mapped_column(Integer, nullable=True)
+    co2 : Mapped[int] = mapped_column(Integer, nullable=True)
+    pm1_0:Mapped[str] = mapped_column(Text, nullable=True)
+    pm10:Mapped[str] = mapped_column(Text, nullable=True)
+    pm2_5:Mapped[str] = mapped_column(Text, nullable=True)
+    sound_level: Mapped[float] = mapped_column(Float, nullable=True)
+    
+
+class Aquacheck(Base):
+    __tablename__ = "aquacheck"
+
+    id : Mapped[int] = mapped_column(primary_key=True)
+    ID_boitier : Mapped[str] = mapped_column(CHAR(14), primary_key=True)
+    timestamp : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    humidity : Mapped[float] = mapped_column(Float, nullable=True)
+    temperature : Mapped[float] = mapped_column(Float, nullable=True)
+    ground_humidity : Mapped[float] = mapped_column(Float, nullable=True)
+    humidex : Mapped[float] = mapped_column(Float, nullable=True)
+    
 
 
 class Conversation(Base):
