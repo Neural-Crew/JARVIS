@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from dotenv import load_dotenv
 from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
+from threading import Lock
 load_dotenv()
 
 
@@ -28,7 +29,7 @@ class EcoWatchClient(EcowatchClientInterface):
     
     BASE_URL = "https://ecowatch.fr/api"
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, lock = Lock()):
         """
         Initialise le client ECOWATCH.
         
@@ -95,7 +96,6 @@ class EcoWatchClient(EcowatchClientInterface):
             >>> client.test_connection()
             {'status': 'ok', 'message': 'Connexion au backend réussie'}
         """
-        print("test conncetion", flush=True)
         return self._make_request("test-connection")
     
     def get_devices(self, table: str) -> List[str]:
@@ -150,6 +150,7 @@ class EcoWatchClient(EcowatchClientInterface):
             >>> client.get_latest_data("climatrack", "20240313101500")
             {'id': 134158, 'temperature': 27.26, 'co2': 739, ...}
         """
+        print("==================Client method executed==================")
         return self._make_request(f"b2b/data/{table}/{device_id}/latest")
     
     def get_filtered_data(

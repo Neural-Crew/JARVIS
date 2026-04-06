@@ -13,7 +13,7 @@ class Query(Base):
 
     query_id : Mapped[str] = mapped_column(primary_key=True)
     table : Mapped[str] = mapped_column(primary_key=True)
-    device_ID : Mapped[str] = mapped_column( CHAR(14), nullable=True)
+    device_ID : Mapped[str] = mapped_column( CHAR(14), primary_key=True )
     
     latest_query_call : Mapped[datetime] = mapped_column(DateTime(timezone=True), 
                                                         nullable=False, 
@@ -21,7 +21,7 @@ class Query(Base):
                                                         onupdate=func.now())
     
     def __repr__(self):
-        return f"query_id={self.query_id}, latest_call={self.latest_query_call}, response={self.response} "
+        return f"Query ({self.query_id}, {self.table}, {self.device_ID}, {self.latest_query_call} ) "
 
 
 class Climatrack(Base):
@@ -39,6 +39,18 @@ class Climatrack(Base):
     pm2_5:Mapped[str] = mapped_column(Text, nullable=True)
     sound_level: Mapped[float] = mapped_column(Float, nullable=True)
     
+    def to_json(self):
+        return { "id": self.id, 
+                "ID_boitier":self.ID_boitier, 
+                "timestamp":self.timestamp,
+                "humidity":self.humidity,
+                "temperature":self.temperature,
+                "tvoc":self.tvoc,
+                "co2":self.co2,
+                "pm1_0":self.pm1_0,
+                "pm10": self.pm10,
+                "pm2_5":self.pm2_5,
+                "sound_level": self.sound_level}
 
 class Aquacheck(Base):
     __tablename__ = "aquacheck"
@@ -51,7 +63,14 @@ class Aquacheck(Base):
     ground_humidity : Mapped[float] = mapped_column(Float, nullable=True)
     humidex : Mapped[float] = mapped_column(Float, nullable=True)
     
-
+    def to_json(self):
+        return {"id":self.id,
+                "ID_boitier":self.ID_boitier,
+                "timestamp":self.timestamp,
+                "humidity":self.humidity,
+                "temperature":self.temperature,
+                "ground_humidity":self.ground_humidity,
+                "humidex":self.humidex}
 
 class Conversation(Base):
     __tablename__ = "conversations"
