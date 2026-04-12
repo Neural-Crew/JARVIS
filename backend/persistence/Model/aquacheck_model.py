@@ -1,6 +1,6 @@
 from backend.persistence.Model.ecowatch_model import EcowatchModel
 from backend.persistence.Model.ecowatch_bd import Aquacheck
-from backend.persistence.engine import engine
+from backend.persistence.Model.engine import engine
 from sqlalchemy import select, update, insert
 from sqlalchemy.orm import Session
 

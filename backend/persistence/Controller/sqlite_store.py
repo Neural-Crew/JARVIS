@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from backend.utils.singleton import Singleton
 from backend.persistence.Model.ecowatch_bd import Conversation, Message
-from backend.persistence.engine import engine
+from backend.persistence.Model.engine import engine
 from sqlalchemy import select, insert
 
 def _utc_now_iso() -> str:

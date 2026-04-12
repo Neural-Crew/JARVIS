@@ -1,5 +1,5 @@
 from backend.utils.singleton import Singleton
-from backend.persistence.engine import engine
+from backend.persistence.Model.engine import engine
 from sqlalchemy.orm import Session
 from sqlalchemy import Result, Row
 

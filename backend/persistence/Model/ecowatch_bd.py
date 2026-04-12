@@ -14,14 +14,15 @@ class Query(Base):
     query_id : Mapped[str] = mapped_column(primary_key=True)
     table : Mapped[str] = mapped_column(primary_key=True)
     device_ID : Mapped[str] = mapped_column( CHAR(14), primary_key=True )
-    
+    start_date : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    end_date : Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     latest_query_call : Mapped[datetime] = mapped_column(DateTime(timezone=True), 
                                                         nullable=False, 
                                                         server_default=func.now(), 
                                                         onupdate=func.now())
     
     def __repr__(self):
-        return f"Query ({self.query_id}, {self.table}, {self.device_ID}, {self.latest_query_call} ) "
+        return f"Query ({self.query_id}, {self.table}, {self.device_ID}, {self.start_date} ----> {self.end_date}, {self.latest_query_call} ) "
 
 
 class Climatrack(Base):
