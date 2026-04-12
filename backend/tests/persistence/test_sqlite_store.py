@@ -2,7 +2,7 @@
 
 # import pytest
 
-# from backend.persistence.sqlite_store import SQLiteChatStore
+# from backend.persistence.Controller.sqlite_store import SQLiteChatStore
 
 
 # def testGivenFreshStoreWhenInitializeThenCreatesRequiredTables(tmp_path):

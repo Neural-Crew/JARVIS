@@ -1,10 +1,11 @@
-from backend.utils.singleton import Singleton
 from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
 from backend.services.integrations.ecowatch.client import EcoWatchClient
-from backend.persistence.sqlite_proxy import SQLiteProxy, QueryIDS
+from backend.persistence.Controller.sqlite_proxy import SQLiteProxy, QueryIDS
 from backend.persistence.Model.ecowatch_model import EcowatchModel
 from backend.persistence.Model.ecowatch_creator import EcowatchCreator
-from typing import Any, Dict, List, Optional, Callable
+from backend.persistence.Controller.query_controller import QueryController
+
+from typing import Any, Dict, List, Callable
 from datetime import timedelta
 from threading import Lock
 
@@ -17,8 +18,10 @@ class EcowatchProxy(EcowatchClientInterface):
     Le cas contraire on fait un appel à l'API. Dans ce cas on enregistre les nouvelles données.
     """
     def __init__(self, lock=Lock()) -> None:
-        self.client = EcoWatchClient(lock = lock)
-        self.sqlproxy = SQLiteProxy(lock = lock)
+        lock = Lock()
+        self.client = EcoWatchClient(lock=lock)
+        self.sqlproxy = SQLiteProxy(lock=lock)
+        self.query_controller = QueryController(lock=lock)
 
     def test_connection(self) -> Dict[str, str]:
         "Redireccion vers l'API"
@@ -29,7 +32,7 @@ class EcowatchProxy(EcowatchClientInterface):
         ecowatch_model : type[EcowatchModel] | None = EcowatchCreator.getTypeEcowatchModel(table)
         assert ecowatch_model
 
-        return self._proxy_exec_not_insert( SQLiteProxy.get_latter_get_device_call, 
+        return self._proxy_exec_not_insert( QueryController.get_latter_get_devices_call, 
                                 timedelta(days=30), 
                                 self.client.get_devices,
                                 (table) )
@@ -38,7 +41,7 @@ class EcowatchProxy(EcowatchClientInterface):
         "Tous les mois"
         ecowatch_model : type[EcowatchModel] | None = EcowatchCreator.getTypeEcowatchModel(table)
         assert ecowatch_model
-        result = self._proxy_execute( SQLiteProxy.get_latter_get_device_data_call, 
+        result = self._proxy_execute( QueryController.get_latter_get_device_data_call, 
                                 timedelta(days=30), 
                                 self.client.get_device_data, 
                                 QueryIDS.get_device_data,
@@ -55,7 +58,7 @@ class EcowatchProxy(EcowatchClientInterface):
         ecowatch_model : type[EcowatchModel] | None = EcowatchCreator.getTypeEcowatchModel(table)
         assert ecowatch_model
     
-        result =  self._proxy_execute( SQLiteProxy.get_latter_get_latest_data_call, 
+        result =  self._proxy_execute( QueryController.get_latter_get_latest_data_call, 
                                 timedelta(hours=1), 
                                 self.client.get_latest_data, 
                                 QueryIDS.get_latest_data,
@@ -80,8 +83,8 @@ class EcowatchProxy(EcowatchClientInterface):
         ecowatch_model : type[EcowatchModel] | None = EcowatchCreator.getTypeEcowatchModel(table)
         assert ecowatch_model
 
-        result =  self._proxy_execute( SQLiteProxy.get_latter_get_filtered_data_call, 
-                                timedelta(hours=1), 
+        result =  self._proxy_execute( QueryController.get_latter_get_filtered_data_call, 
+                                timedelta(hours=1),
                                 self.client.get_filtered_data, 
                                 QueryIDS.get_filtered_data,
                                 ecowatch_model,
@@ -98,12 +101,13 @@ class EcowatchProxy(EcowatchClientInterface):
                        query_id : QueryIDS,
                        ecowatch_model : type[EcowatchModel], 
                        select_function : Callable[..., Any] , *args, **kwargs):
-        query = self.sqlproxy.check_latter_call(proxy_method, args[0], args[1], timedelta)
+        complete_kwargs = {"table": args[0]} | kwargs
+        query = self.query_controller.check_latter_call(proxy_method, timedelta, **complete_kwargs)
         print(f"=============== Query {query} =============")
         if query is None:
             response = client_method(*args)
             self.sqlproxy.add_data_to_tables(ecowatch_model, select_function, response, **kwargs)
-            self.sqlproxy.insert_OR_update_latest_query(query_id, table=args[0], device_id=args[1])
+            self.query_controller.add_query(query_id, table=args[0], **kwargs)
         else:
             response = self.sqlproxy.search_query_data(ecowatch_model, select_function, **kwargs)
             
@@ -116,7 +120,7 @@ class EcowatchProxy(EcowatchClientInterface):
                                client_method,
                                *args
                                ):
-        response = self.sqlproxy.check_latter_call(proxy_method, args[0], None, timedelta)
+        response = self.query_controller.check_latter_call(proxy_method, timedelta, table=args[0])
         if response is None:
             response = client_method(*args)
         assert response is not None
@@ -124,4 +128,3 @@ class EcowatchProxy(EcowatchClientInterface):
 
     def __repr__(self) -> str:
         return "Proxy redirection"
-    

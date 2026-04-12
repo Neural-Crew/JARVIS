@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from backend.agent.agent import stream_chat
-from backend.persistence.sqlite_store import SQLiteChatStore
+from backend.persistence.Controller.sqlite_store import SQLiteChatStore
 
 class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1)
