@@ -36,6 +36,8 @@ jobs:
           sleep 10
           curl -fsS http://127.0.0.1:8000/ | grep '"status":"ok"'
       - name: Run backend tests
+        env:
+          ECOWATCH_API_KEY: ${{ secrets.ECOWATCH_API_KEY }}
         run: poetry run pytest
 
   frontend-tests:
