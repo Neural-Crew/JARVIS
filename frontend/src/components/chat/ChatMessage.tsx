@@ -1,16 +1,79 @@
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Message } from "@/types/chat";
-import { motion } from "framer-motion";
-import { Bot, User } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+  import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+  import { TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+  import { ChartSpec, Message } from "@/types/chat";
+  import { motion } from "framer-motion";
+  import { Bot, User } from "lucide-react";
+  import ReactMarkdown from "react-markdown";
+  import remarkGfm from "remark-gfm";
+  import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
 interface ChatMessageProps {
   message: Message;
 }
 
+function ToolChart({ chart }: { chart: ChartSpec }) {
+  const metric = chart.y_keys[0];
+  const chartConfig: ChartConfig = {
+    [metric]: {
+      label: metric,
+      color: "hsl(var(--primary))",
+    },
+  };
+
+  if (!chart.points?.length || !metric) {
+    return (
+      <div className="mt-2 rounded-lg border border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
+        Impossible d'afficher le graphique: spec invalide ou vide.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-xl border border-border/60 bg-secondary/20 p-3">
+      <p className="mb-2 text-xs font-medium text-foreground">{chart.title}</p>
+      <ChartContainer config={chartConfig} className="h-56 w-full">
+        <LineChart data={chart.points} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
+          <CartesianGrid vertical={false} />
+          <XAxis
+            dataKey={chart.x_key}
+            tickLine={false}
+            axisLine={false}
+            minTickGap={40}
+            tickFormatter={(value: string) => {
+              if (typeof value !== "string") return "";
+              return value.slice(5, 16).replace("T", " ");
+            }}
+          />
+          <YAxis tickLine={false} axisLine={false} width={42} />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Line
+            type="monotone"
+            dataKey={metric}
+            stroke={`var(--color-${metric})`}
+            strokeWidth={2}
+            dot={false}
+          />
+        </LineChart>
+      </ChartContainer>
+      {chart.metadata?.aggregation && (
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          agrégation: {chart.metadata.aggregation}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
   const toolCalls = message.toolCalls ?? [];
+  const chartPayload = toolCalls.find((tool) => tool.payload?.type === "chart")?.payload;
 
   return (
     <motion.div
@@ -35,8 +98,25 @@ export function ChatMessage({ message }: ChatMessageProps) {
           {isUser ? "Vous" : "Assistant"}
         </p>
         <div className="prose prose-invert prose-sm max-w-none text-foreground leading-relaxed [&_p]:mb-3 [&_code]:bg-secondary [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-primary [&_pre]:bg-secondary [&_pre]:rounded-lg [&_pre]:p-4">
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              table: ({ node: _node, ...props }) => (
+                <div className="my-4 w-full overflow-y-auto rounded-lg border bg-card text-card-foreground">
+                  <table className="w-full caption-bottom text-sm" {...props} />
+                </div>
+              ),
+              thead: ({ node: _node, ...props }) => <TableHeader {...props} />,
+              tbody: ({ node: _node, ...props }) => <TableBody {...props} />,
+              tr: ({ node: _node, ...props }) => <TableRow {...props} />,
+              th: ({ node: _node, ...props }) => <TableHead {...props} />,
+              td: ({ node: _node, ...props }) => <TableCell {...props} />,
+            }}
+          >
+            {message.content}
+          </ReactMarkdown>
         </div>
+        {!isUser && chartPayload?.type === "chart" && <ToolChart chart={chartPayload.chart} />}
         {!isUser && toolCalls.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2 text-xs">
             {toolCalls.map((tool) => {
@@ -51,9 +131,12 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 <HoverCard key={tool.id}>
                   <HoverCardTrigger asChild>
                     <span
-                      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 ${badgeClass}`}
+                      className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 transition-colors duration-300 ${badgeClass} ${tool.status === "running" ? "animate-pulse" : ""}`}
                     >
-                      {tool.name} · {tool.status}
+                      {tool.status === "running" && (
+                        <span className="inline-block h-2 w-2 rounded-full bg-current animate-pulse" />
+                      )}
+                      {tool.name} · {tool.status === "running" ? "en cours..." : tool.status}
                     </span>
                   </HoverCardTrigger>
                   <HoverCardContent align="start" className="w-80">

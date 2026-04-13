@@ -12,11 +12,15 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from backend.agent.tool_ndjson import ToolNdjson
 from backend.services.models.mistral import MistralModel
 from backend.services.models.ollama import OllamaModel
-from backend.tools.ecowatch_sensors import (get_all_sensor_data,
+from backend.services.models.rate_limiter import mistral_rate_limiter
+from backend.tools.datetime_tools import get_current_datetime
+from backend.tools.ecowatch_sensors import (generate_sensor_chart,
                                             get_latest_sensor_data,
                                             get_sensor_history,
                                             list_ecowatch_devices,
                                             test_ecowatch_connection)
+
+from typing import Any
 
 load_dotenv()
 
@@ -29,14 +33,17 @@ def _get_agent():
         api_key = os.getenv("MISTRAL_API_KEY")
         if not api_key:
             raise RuntimeError("MISTRAL_API_KEY is required to use /chat")
-        model = MistralModel().get_model(api_key=api_key, temperature=0)
+        model = MistralModel().get_model(
+            api_key=api_key, temperature=0, rate_limiter=mistral_rate_limiter
+        )
         #model = OllamaModel().get_model(temperature=0)
         _agent = create_agent(model=model, tools=[
+            get_current_datetime,
             test_ecowatch_connection,
             get_latest_sensor_data,
             list_ecowatch_devices,
             get_sensor_history,
-            get_all_sensor_data
+            generate_sensor_chart,
         ])
     return _agent
 
@@ -61,7 +68,7 @@ async def stream_chat(history: list[dict], on_token: Callable[[str], None] | Non
     except Exception as e:
         print(f"Error loading system prompt: {e}")
 
-    lc_messages = [
+    lc_messages : Any = [
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]
@@ -70,15 +77,22 @@ async def stream_chat(history: list[dict], on_token: Callable[[str], None] | Non
         lc_messages.insert(0, system_message)
 
     agent = _get_agent()
-    async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
-        event_type = event.get("event")
-        data = event.get("data", {})
+    try:
+        async for event in agent.astream_events({"messages": lc_messages}, version="v2"):
+            event_type = event.get("event")
+            data = event.get("data", {})
 
-        if event_type == "on_chat_model_stream":
-            chunk = data.get("chunk")
-            if chunk and chunk.content:
-                token = str(chunk.content)
-                if on_token is not None:
-                    on_token(token)
-                yield ToolNdjson()._to_ndjson_line({"type": "token", "content": token})
-        else: yield ToolNdjson.handleEvent(event_type, event, data)
+            if event_type == "on_chat_model_stream":
+                chunk = data.get("chunk")
+                if chunk and chunk.content:
+                    yield ToolNdjson()._to_ndjson_line({"type": "token", "content": chunk.content})
+            else:
+                line = ToolNdjson.handleEvent(event_type, event, data)
+                if line:
+                    yield line
+    except Exception as e:
+        print(f"[stream_chat] Error during agent stream: {e}")
+        yield ToolNdjson()._to_ndjson_line({
+            "type": "token",
+            "content": f"\n\n⚠️ Une erreur est survenue (rate limit ou réseau). Veuillez réessayer dans quelques secondes."
+        })

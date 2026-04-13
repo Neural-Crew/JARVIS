@@ -17,14 +17,12 @@ def get_environmental_data(city: str) -> dict:
         city: Le nom de la ville pour laquelle récupérer les données environnementales. Exemples: "Paris", "Lyon", "Marseille", "New York"
     
     Returns:
-        Un dictionnaire contenant les données environnementales avec les clés :
-        - city: nom de la ville
-        - temperature: température actuelle
-        - humidity: taux d'humidité
-        - air_quality_index: indice de qualité de l'air (0-500)
-        - air_quality_level: niveau qualitatif (Excellente/Moyenne/Mauvaise)
-        - recommendation: conseil basé sur la qualité de l'air
-        - source: source des données
+        Un dictionnaire normalisé:
+        - success: bool
+        - source: nom de la source
+        - en succès: city, temperature, humidity, air_quality_index,
+          air_quality_level, recommendation, data={...mêmes champs métiers...}
+        - en erreur: error, city
     """
     try:
         # Simulation d'appel API (Mock)
@@ -43,18 +41,31 @@ def get_environmental_data(city: str) -> dict:
             quality = "Mauvaise"
             advice = "Évitez les activités sportives en extérieur."
 
+        temperature = f"{random.randint(10, 35)}°C"
+        humidity = f"{random.randint(30, 80)}%"
+
         return {
+            "success": True,
             "city": city,
-            "temperature": f"{random.randint(10, 35)}°C",
-            "humidity": f"{random.randint(30, 80)}%",
+            "temperature": temperature,
+            "humidity": humidity,
             "air_quality_index": aqi,
             "air_quality_level": quality,
             "recommendation": advice,
+            "data": {
+                "city": city,
+                "temperature": temperature,
+                "humidity": humidity,
+                "air_quality_index": aqi,
+                "air_quality_level": quality,
+                "recommendation": advice,
+            },
             "source": "EcoWatch Live Sensor (Mock)"
         }
     
     except Exception as e:
         return {
+            "success": False,
             "error": f"Impossible de récupérer les données pour {city}: {str(e)}",
             "city": city,
             "source": "EcoWatch API"

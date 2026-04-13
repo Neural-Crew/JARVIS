@@ -1,5 +1,6 @@
 import json
 
+
 class ToolNdjson:
     @staticmethod
     def handleEvent( event_type, event, data ) -> str:
@@ -48,19 +49,27 @@ class ToolNdjson:
         serialized = data.get("serialized", {})
         return serialized.get("name") or data.get("tool") or "tool"
     
+    def _serialize_tool_value(self, value) -> str:
+        if isinstance(value, (dict, list)):
+            return json.dumps(value, ensure_ascii=True)
+        return str(value)
+    
     def _tool_input(self, data: dict) -> str:
         if "input_str" in data and data["input_str"] is not None:
             return str(data["input_str"])
         if "input" in data and data["input"] is not None:
-            return str(data["input"])
+            input_value = data["input"]
+            return self._serialize_tool_value(input_value)
         if "inputs" in data and data["inputs"] is not None:
-            return json.dumps(data["inputs"], ensure_ascii=True)
+            inputs_value = data["inputs"]
+            return self._serialize_tool_value(inputs_value)
         return ""
 
 
     def _tool_output(self, data: dict) -> str:
         if "output" in data and data["output"] is not None:
-            return str(data["output"])
+            output = data["output"]
+            return self._serialize_tool_value(output)
         if "outputs" in data and data["outputs"] is not None:
             return json.dumps(data["outputs"], ensure_ascii=True)
         return ""

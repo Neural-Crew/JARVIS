@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -13,7 +13,6 @@ class ChatRequest(BaseModel):
     session_id: str = Field(min_length=1)
     message: str = Field(min_length=1)
 
-
 class HistoryMessage(BaseModel):
     role: str
     content: str
@@ -24,13 +23,19 @@ def _default_db_path() -> str:
     # Keep DB at repository root by default: ./chat.db
     return str(Path(__file__).resolve().parents[1] / "chat.db")
 
-
 app = FastAPI()
 store = SQLiteChatStore()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8080",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://192.168.1.172:8080",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -70,8 +75,14 @@ async def chat_endpoint(request: ChatRequest):
                     q_role="assistant",
                     q_content=assistant_text,
                 )
-
-    return StreamingResponse(_stream_and_persist(), media_type="application/x-ndjson")
+    return StreamingResponse(
+        _stream_and_persist(), # La méthode streamchat vient de agent.py
+        media_type="application/x-ndjson",
+        headers={
+            "X-Accel-Buffering": "no",
+            "Cache-Control": "no-cache",
+        },
+    )
 
 
 @app.get("/chat/{session_id}/messages", response_model=list[HistoryMessage])
@@ -81,6 +92,20 @@ async def get_session_messages(session_id: str):
         raise HTTPException(status_code=400, detail="session_id cannot be empty")
     return store.get_messages(normalized)
 
+# async def chat_endpoint(request: dict = Body(...)):
+#     """
+#     Accepte un JSON brut: {"messages": [{"role": "...", "content": "..."}]}
+#     Renvoie la réponse de l'IA en chunks via HTTP Streaming.
+#     """
+#     messages = request.get("messages", [])
+#     return StreamingResponse(
+#         stream_chat(messages), # La méthode streamchat vient de agent.py
+#         media_type="application/x-ndjson",
+#         headers={
+#             "X-Accel-Buffering": "no",
+#             "Cache-Control": "no-cache",
+#         },
+#     )
 
 @app.get("/")
 def root():
