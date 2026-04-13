@@ -1,10 +1,14 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+from typing import Any
 
 from langchain_core.tools import tool
 
-from backend.services.integrations.ecowatch.client import (EcoWatchAPIError,
-                                                           EcoWatchClient)
+from backend.services.integrations.ecowatch.client import EcoWatchAPIError, EcoWatchClient
+from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
+from backend.services.integrations.ecowatch.proxy import EcowatchProxy
+
+proxy = True
 
 
 @tool(parse_docstring=True)
@@ -25,7 +29,7 @@ def test_ecowatch_connection() -> dict:
         - en erreur: error
     """
     try:
-        client = EcoWatchClient()
+        client : EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         result = client.test_connection()
         
         return {
@@ -86,7 +90,7 @@ def get_latest_sensor_data(device_id: str, sensor_type: str = "climatrack") -> d
           ground_humidity, humidex
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         data = client.get_latest_data(table=sensor_type, device_id=device_id)
         
         return {
@@ -144,7 +148,7 @@ def list_ecowatch_devices(sensor_type: str = "climatrack") -> dict:
         - en erreur: error
     """
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         devices = client.get_devices(table=sensor_type)
         
         return {
@@ -210,7 +214,7 @@ def get_sensor_history(device_id: str, start_date: str, end_date: str, sensor_ty
     max_records = 300
 
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         data = client.get_filtered_data(
             table=sensor_type,
             device_id=device_id,
@@ -270,7 +274,7 @@ def _to_datetime(value: str):
         return None
 
 
-def _aggregate_records(records: list[dict], value_key: str, aggregation: str) -> list[dict]:
+def _aggregate_records(records: list[dict[Any, Any]], value_key: str, aggregation: str) -> list[dict]:
     if aggregation == "raw":
         points = []
         for record in records:
@@ -287,7 +291,9 @@ def _aggregate_records(records: list[dict], value_key: str, aggregation: str) ->
 
     buckets: dict[str, list[float]] = defaultdict(list)
     for record in records:
-        dt = _to_datetime(record.get("timestamp"))
+        tstamp : str | None = record.get("timestamp")
+        assert tstamp is not None
+        dt = _to_datetime(tstamp)
         value = record.get(value_key)
         if dt is None or value is None:
             continue
@@ -451,7 +457,7 @@ def generate_sensor_chart(
         }
 
     try:
-        client = EcoWatchClient()
+        client :EcowatchClientInterface = EcowatchProxy() if proxy else EcoWatchClient()
         records = client.get_filtered_data(
             table=normalized_sensor_type,
             device_id=device_id,

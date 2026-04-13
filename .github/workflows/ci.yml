@@ -9,13 +9,14 @@ on:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    environment: "ecowatch"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
       - name: Cache Poetry and pip
         uses: actions/cache@v4
         with:
@@ -35,6 +36,8 @@ jobs:
           sleep 10
           curl -fsS http://127.0.0.1:8000/ | grep '"status":"ok"'
       - name: Run backend tests
+        env:
+          ECOWATCH_API_KEY: ${{ secrets.ECOWATCH_API_KEY }}
         run: poetry run pytest
 
   frontend-tests:

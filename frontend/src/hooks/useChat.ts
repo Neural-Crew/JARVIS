@@ -1,56 +1,10 @@
-import { Conversation, Message, ToolCall, ToolPayload } from "@/types/chat";
-import { useCallback, useState } from "react";
+import { Conversation, Message, ToolCall } from "@/types/chat";
+import { useCallback, useEffect, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+const STORAGE_KEY = "jarvis_conversations";
 
 const generateId = () => Math.random().toString(36).substring(2, 15);
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null;
-
-const isChartToolPayload = (value: unknown): value is ToolPayload => {
-  if (!isRecord(value)) return false;
-  return value.type === "chart" && value.chart !== undefined;
-};
-
-const hasChartPayloadEnvelope = (
-  value: unknown
-): value is { payload: ToolPayload } => {
-  if (!isRecord(value) || !("payload" in value)) return false;
-  return isChartToolPayload(value.payload);
-};
-
-const parseToolPayload = (rawOutput: string): ToolPayload | undefined => {
-  if (!rawOutput) return undefined;
-
-  const extractPayload = (candidate: unknown): ToolPayload | undefined => {
-    if (!hasChartPayloadEnvelope(candidate)) return undefined;
-    return candidate.payload;
-  };
-
-  try {
-    const parsed = JSON.parse(rawOutput);
-    const payload = extractPayload(parsed);
-    if (payload) return payload;
-  } catch {
-    // ignore and try fallback extraction below
-  }
-
-  const firstBrace = rawOutput.indexOf("{");
-  const lastBrace = rawOutput.lastIndexOf("}");
-  if (firstBrace >= 0 && lastBrace > firstBrace) {
-    const candidate = rawOutput.slice(firstBrace, lastBrace + 1);
-    try {
-      const parsed = JSON.parse(candidate);
-      const payload = extractPayload(parsed);
-      if (payload) return payload;
-    } catch {
-      return undefined;
-    }
-  }
-
-  return undefined;
-};
 
 const createConversation = (title = "Nouvelle discussion"): Conversation => ({
   id: generateId(),
@@ -60,18 +14,134 @@ const createConversation = (title = "Nouvelle discussion"): Conversation => ({
   updatedAt: new Date(),
 });
 
+type ApiHistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+};
+
+type StoredConversation = {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const toStored = (conversation: Conversation): StoredConversation => ({
+  id: conversation.id,
+  title: conversation.title,
+  createdAt: conversation.createdAt.toISOString(),
+  updatedAt: conversation.updatedAt.toISOString(),
+});
+
+const fromStored = (stored: StoredConversation): Conversation => ({
+  id: stored.id,
+  title: stored.title,
+  messages: [],
+  createdAt: new Date(stored.createdAt),
+  updatedAt: new Date(stored.updatedAt),
+});
+
+const readStoredConversations = (): Conversation[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as StoredConversation[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(fromStored);
+  } catch {
+    return [];
+  }
+};
+
+const saveStoredConversations = (conversations: Conversation[]) => {
+  const value = JSON.stringify(conversations.map(toStored));
+  localStorage.setItem(STORAGE_KEY, value);
+};
+
+const toUiMessage = (message: ApiHistoryMessage): Message => ({
+  id: generateId(),
+  role: message.role,
+  content: message.content,
+  timestamp: new Date(message.timestamp),
+});
+
+const buildInitialState = (): {
+  conversations: Conversation[];
+  activeConversationId: string;
+} => {
+  const stored = readStoredConversations();
+  if (stored.length > 0) {
+    return {
+      conversations: stored,
+      activeConversationId: stored[0].id,
+    };
+  }
+
+  const first = createConversation("Première discussion");
+  return {
+    conversations: [first],
+    activeConversationId: first.id,
+  };
+};
+
 export function useChat() {
-  const [conversations, setConversations] = useState<Conversation[]>([
-    createConversation("Première discussion"),
-  ]);
+  const [initial] = useState(buildInitialState);
+  const [conversations, setConversations] = useState<Conversation[]>(
+    initial.conversations
+  );
   const [activeConversationId, setActiveConversationId] = useState<string>(
-    conversations[0].id
+    initial.activeConversationId
   );
   const [isLoading, setIsLoading] = useState(false);
 
   const activeConversation = conversations.find(
     (c) => c.id === activeConversationId
   );
+
+  useEffect(() => {
+    saveStoredConversations(conversations);
+  }, [conversations]);
+
+  useEffect(() => {
+    if (!activeConversation) return;
+
+    let cancelled = false;
+
+    const loadHistory = async () => {
+      try {
+        const response = await fetch(
+          `${API_BASE}/chat/${activeConversation.id}/messages`
+        );
+        if (!response.ok) return;
+        const data = (await response.json()) as ApiHistoryMessage[];
+        if (cancelled) return;
+
+        setConversations((prev) =>
+          prev.map((conversation) =>
+            conversation.id === activeConversation.id
+              ? {
+                  ...conversation,
+                  messages: data.map(toUiMessage),
+                  updatedAt:
+                    data.length > 0
+                      ? new Date(data[data.length - 1].timestamp)
+                      : conversation.updatedAt,
+                }
+              : conversation
+          )
+        );
+      } catch {
+        // Keep local state if backend is unavailable.
+      }
+    };
+
+    loadHistory();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeConversation?.id]);
 
   const addMessage = useCallback(
     async (content: string) => {
@@ -86,19 +156,7 @@ export function useChat() {
 
       const assistantMessageId = generateId();
 
-      // Build message history for the API
-      const currentConv = conversations.find(
-        (c) => c.id === activeConversationId
-      );
-      const apiMessages = [
-        ...(currentConv?.messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-        })) || []),
-        { role: "user" as const, content: content.trim() },
-      ];
-
-      // Add user message and empty assistant message
+      // Add user message and empty assistant message immediately.
       setConversations((prev) =>
         prev.map((c) => {
           if (c.id !== activeConversationId) return c;
@@ -128,7 +186,10 @@ export function useChat() {
         const response = await fetch(`${API_BASE}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: apiMessages }),
+          body: JSON.stringify({
+            session_id: activeConversationId,
+            message: content.trim(),
+          }),
         });
 
         if (!response.ok) {
@@ -143,8 +204,6 @@ export function useChat() {
         let accumulated = "";
         let assistantText = "";
         let toolCalls: ToolCall[] = [];
-        const toolStartTimes: Record<string, number> = {};
-        const MIN_RUNNING_MS = 500;
 
         const updateAssistantMessage = () => {
           setConversations((prev) =>
@@ -196,7 +255,6 @@ export function useChat() {
 
               const toolId = evt.run_id ?? generateId();
               if (evt.type === "tool_start") {
-                toolStartTimes[toolId] = Date.now();
                 upsertToolCall({
                   id: toolId,
                   name: evt.name ?? "tool",
@@ -209,51 +267,27 @@ export function useChat() {
 
               if (evt.type === "tool_end") {
                 const existing = toolCalls.find((t) => t.id === toolId);
-                const output = evt.output ?? "";
-                const elapsed = Date.now() - (toolStartTimes[toolId] ?? 0);
-                const delay = Math.max(0, MIN_RUNNING_MS - elapsed);
-
-                const applyEnd = () => {
-                  upsertToolCall({
-                    id: toolId,
-                    name: evt.name ?? existing?.name ?? "tool",
-                    status: "success",
-                    input: existing?.input ?? "",
-                    output,
-                    payload: parseToolPayload(output),
-                  });
-                  updateAssistantMessage();
-                };
-
-                if (delay > 0) {
-                  setTimeout(applyEnd, delay);
-                } else {
-                  applyEnd();
-                }
+                upsertToolCall({
+                  id: toolId,
+                  name: evt.name ?? existing?.name ?? "tool",
+                  status: "success",
+                  input: existing?.input ?? "",
+                  output: evt.output ?? "",
+                });
+                updateAssistantMessage();
                 continue;
               }
 
               if (evt.type === "tool_error") {
                 const existing = toolCalls.find((t) => t.id === toolId);
-                const elapsed = Date.now() - (toolStartTimes[toolId] ?? 0);
-                const delay = Math.max(0, MIN_RUNNING_MS - elapsed);
-
-                const applyError = () => {
-                  upsertToolCall({
-                    id: toolId,
-                    name: evt.name ?? existing?.name ?? "tool",
-                    status: "error",
-                    input: existing?.input ?? "",
-                    error: evt.error ?? "",
-                  });
-                  updateAssistantMessage();
-                };
-
-                if (delay > 0) {
-                  setTimeout(applyError, delay);
-                } else {
-                  applyError();
-                }
+                upsertToolCall({
+                  id: toolId,
+                  name: evt.name ?? existing?.name ?? "tool",
+                  status: "error",
+                  input: existing?.input ?? "",
+                  error: evt.error ?? "",
+                });
+                updateAssistantMessage();
                 continue;
               }
             } catch {
@@ -286,7 +320,7 @@ export function useChat() {
         setIsLoading(false);
       }
     },
-    [activeConversationId, isLoading, conversations]
+    [activeConversationId, isLoading]
   );
 
   const newConversation = useCallback(() => {

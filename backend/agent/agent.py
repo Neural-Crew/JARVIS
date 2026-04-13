@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from collections.abc import Callable
 
 from dotenv import load_dotenv
 
@@ -18,6 +19,8 @@ from backend.tools.ecowatch_sensors import (generate_sensor_chart,
                                             get_sensor_history,
                                             list_ecowatch_devices,
                                             test_ecowatch_connection)
+
+from typing import Any
 
 load_dotenv()
 
@@ -45,7 +48,7 @@ def _get_agent():
     return _agent
 
 
-async def stream_chat(history: list[dict]):
+async def stream_chat(history: list[dict], on_token: Callable[[str], None] | None = None):
     """
     Gère la conversation, transforme l'historique brut en messages LangChain, invoque l'agent et stream la réponse token par token.
 
@@ -65,7 +68,7 @@ async def stream_chat(history: list[dict]):
     except Exception as e:
         print(f"Error loading system prompt: {e}")
 
-    lc_messages = [
+    lc_messages : Any = [
         HumanMessage(content=m["content"]) if m["role"] == "user" else AIMessage(content=m["content"])
         for m in history
     ]

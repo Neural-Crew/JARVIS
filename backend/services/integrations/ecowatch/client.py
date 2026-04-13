@@ -9,7 +9,8 @@ from typing import Any, Dict, List, Optional
 
 import requests
 from dotenv import load_dotenv
-
+from backend.services.integrations.ecowatch.ecowatch_client_interface import EcowatchClientInterface
+from threading import Lock
 load_dotenv()
 
 
@@ -18,7 +19,7 @@ class EcoWatchAPIError(Exception):
     pass
 
 
-class EcoWatchClient:
+class EcoWatchClient(EcowatchClientInterface):
     """
     Client pour l'API ECOWATCH.
     
@@ -28,7 +29,7 @@ class EcoWatchClient:
     
     BASE_URL = "https://ecowatch.fr/api"
     
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, lock = Lock()):
         """
         Initialise le client ECOWATCH.
         
@@ -114,6 +115,7 @@ class EcoWatchClient:
             >>> client.get_devices("aquacheck")
             ['20250314140500', '20250513115530', ...]
         """
+        
         return self._make_request("b2b/devices", params={"table": table})
     
     def get_device_data(self, table: str, device_id: str) -> List[Dict[str, Any]]:
@@ -148,6 +150,7 @@ class EcoWatchClient:
             >>> client.get_latest_data("climatrack", "20240313101500")
             {'id': 134158, 'temperature': 27.26, 'co2': 739, ...}
         """
+        print("==================Client method executed==================")
         return self._make_request(f"b2b/data/{table}/{device_id}/latest")
     
     def get_filtered_data(
@@ -185,4 +188,8 @@ class EcoWatchClient:
         return self._make_request(f"b2b/data/{table}/{device_id}/filter", params=params)
     
     def __repr__(self) -> str:
+        """
+        Methode sous-jacente de la methode __str__
+        """
+        assert self.api_key is not None
         return f"<EcoWatchClient api_key=***{self.api_key[-8:]}>"
