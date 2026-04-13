@@ -4,12 +4,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 import backend.main as main_module
-from backend.persistence.sqlite_store import SQLiteChatStore
+from backend.persistence.Controller.sqlite_store import SQLiteChatStore
 
 
 @pytest.fixture
 def chat_store(tmp_path, monkeypatch):
-    store = SQLiteChatStore(db_path=str(tmp_path / "chat_api.db"))
+    store = SQLiteChatStore()
     monkeypatch.setattr(main_module, "store", store)
     return store
 
@@ -78,8 +78,8 @@ def testGivenUnknownSessionWhenGetMessagesThenReturnsEmptyList(client):
 
 
 def testGivenExistingSessionWhenGetMessagesThenReturnsOrderedHistory(client, chat_store):
-    chat_store.add_message(session_id="session-history", role="user", content="Question")
-    chat_store.add_message(session_id="session-history", role="assistant", content="Reponse")
+    chat_store.add_message(q_session_id="session-history", q_role="user", q_content="Question")
+    chat_store.add_message(q_session_id="session-history", q_role="assistant", q_content="Reponse")
 
     response = client.get("/chat/session-history/messages")
 
@@ -90,8 +90,8 @@ def testGivenExistingSessionWhenGetMessagesThenReturnsOrderedHistory(client, cha
 
 
 def testGivenTwoSessionIdsWhenStoreMessagesThenHistoriesAreIsolated(chat_store):
-    chat_store.add_message(session_id="session-one", role="user", content="A")
-    chat_store.add_message(session_id="session-two", role="user", content="B")
+    chat_store.add_message(q_session_id="session-one", q_role="user", q_content="A")
+    chat_store.add_message(q_session_id="session-two", q_role="user", q_content="B")
 
     history_one = chat_store.get_messages("session-one")
     history_two = chat_store.get_messages("session-two")
