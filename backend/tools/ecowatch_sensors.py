@@ -9,20 +9,10 @@ from backend.services.integrations.ecowatch.client import (EcoWatchAPIError,
 
 @tool(parse_docstring=True)
 def test_ecowatch_connection() -> dict:
-    """Teste la connexion à l'API ECOWATCH et vérifie que la clé API est valide.
-    
-    Utilisez ce tool quand l'utilisateur demande :
-    - Si l'API ECOWATCH est accessible
-    - Si la connexion fonctionne
-    - Si la clé API est valide
-    - De vérifier l'état du service ECOWATCH
-    
+    """Teste la connexion à l'API ECOWATCH et vérifie la validité de la clé API.
+
     Returns:
-        Un dictionnaire normalisé:
-        - success: bool
-        - source: "ECOWATCH API"
-        - en succès: status, message, data={status, message}
-        - en erreur: error
+        Dictionnaire contenant le statut de la connexion, un message et la source.
     """
     try:
         client = EcoWatchClient()
@@ -62,28 +52,13 @@ def test_ecowatch_connection() -> dict:
 @tool(parse_docstring=True)
 def get_latest_sensor_data(device_id: str, sensor_type: str = "climatrack") -> dict:
     """Récupère les dernières données d'un capteur ECOWATCH en temps réel.
-    
-    Utilisez ce tool quand l'utilisateur demande :
-    - Les dernières mesures d'un capteur spécifique
-    - Les données actuelles de qualité de l'air (climatrack)
-    - Les données agricoles actuelles (aquacheck: humidité du sol, température)
-    - L'état actuel d'un device ECOWATCH
-    
+
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique et clé secondaire pour récupérer les données (exemple "20240313101500").
-            Différent de l'ID classique (clé primaire auto-incrémentée en base).
-        sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
+        device_id: L'identifiant unique du boitier (ex: "20240313101500").
+        sensor_type: Type de capteur ("climatrack" ou "aquacheck").
 
     Returns:
-        Un dictionnaire enveloppe avec les clés:
-        - success, device_id, sensor_type, source
-        - data: dernière mesure brute renvoyée par l'API ECOWATCH
-
-        Structure de `data` selon le type de capteur:
-        - Pour climatrack: id, ID_boitier, timestamp, humidity, temperature,
-          tvoc, co2, pm1_0, pm2_5, pm10, sound_level
-        - Pour aquacheck: id, ID_boitier, timestamp, humidity, temperature,
-          ground_humidity, humidex
+        Dictionnaire contenant les dernières mesures brutes renvoyées par l'API.
     """
     try:
         client = EcoWatchClient()
@@ -126,22 +101,12 @@ def get_latest_sensor_data(device_id: str, sensor_type: str = "climatrack") -> d
 @tool(parse_docstring=True)
 def list_ecowatch_devices(sensor_type: str = "climatrack") -> dict:
     """Liste tous les capteurs ECOWATCH disponibles pour un type donné.
-    
-    Utilisez ce tool quand l'utilisateur demande :
-    - La liste des capteurs disponibles
-    - Quels devices sont accessibles
-    - Les IDs des capteurs climatrack ou aquacheck
-    - Combien de capteurs sont déployés
-    
+
     Args:
-        sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
-    
+        sensor_type: Type de capteur ("climatrack" ou "aquacheck").
+
     Returns:
-        Un dictionnaire normalisé:
-        - success: bool
-        - source: "ECOWATCH API"
-        - en succès: sensor_type, device_count, devices, data={device_count, devices}
-        - en erreur: error
+        Dictionnaire contenant la liste des identifiants de boitiers disponibles.
     """
     try:
         client = EcoWatchClient()
@@ -185,27 +150,15 @@ def list_ecowatch_devices(sensor_type: str = "climatrack") -> dict:
 @tool(parse_docstring=True)
 def get_sensor_history(device_id: str, start_date: str, end_date: str, sensor_type: str = "climatrack") -> dict:
     """Récupère l'historique des mesures d'un capteur sur une période donnée.
-    
-    Utilisez ce tool quand l'utilisateur demande :
-    - L'évolution des mesures sur une période
-    - Les données historiques d'un capteur
-    - Les tendances de température, CO2, pollution sur plusieurs jours
-    - Une comparaison entre différentes dates
-    
+
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique et clé secondaire pour récupérer les données (exemple "20240313101500").
-            Différent de l'ID classique (clé primaire auto-incrémentée en base).
-        start_date: Date de début au format YYYY-MM-DD (exemple "2025-06-16")
-        end_date: Date de fin au format YYYY-MM-DD (exemple "2025-06-17")
-        sensor_type: Type de capteur - "climatrack" pour qualité de l'air ou "aquacheck" pour agriculture. Par défaut "climatrack"
-    
+        device_id: L'identifiant unique du boitier (ex: "20240313101500").
+        start_date: Date de début (format YYYY-MM-DD).
+        end_date: Date de fin (format YYYY-MM-DD).
+        sensor_type: Type de capteur ("climatrack" ou "aquacheck").
+
     Returns:
-        Un dictionnaire normalisé:
-        - success: bool
-        - source: "ECOWATCH API"
-        - en succès: device_id, sensor_type, period, record_count,
-          truncated, max_records, data (liste des mesures)
-        - en erreur: error
+        Dictionnaire contenant la liste des mesures historiques.
     """
     max_records = 300
 
@@ -264,6 +217,14 @@ def get_sensor_history(device_id: str, start_date: str, end_date: str, sensor_ty
 
 
 def _to_datetime(value: str):
+    """Convertit une chaîne ISO en objet datetime.
+
+    Args:
+        value: La chaîne à convertir.
+
+    Returns:
+        Un objet datetime ou None en cas d'erreur.
+    """
     try:
         return datetime.fromisoformat(value.replace("Z", "+00:00"))
     except (TypeError, ValueError):
@@ -271,6 +232,16 @@ def _to_datetime(value: str):
 
 
 def _aggregate_records(records: list[dict], value_key: str, aggregation: str) -> list[dict]:
+    """Agrège les mesures d'un capteur par heure ou par jour.
+
+    Args:
+        records: Liste des mesures brutes.
+        value_key: Le champ à agréger.
+        aggregation: Type d'agrégation ("raw", "hour", "day").
+
+    Returns:
+        Liste des points agrégés.
+    """
     if aggregation == "raw":
         points = []
         for record in records:
@@ -321,45 +292,18 @@ def generate_sensor_chart(
     sensor_type: str = "climatrack",
     aggregation: str = "hour",
 ) -> dict:
-    """Génère une spécification de graphique compacte (chart_spec) pour affichage en dessous de votre réponse.
-
-    Utilisez ce tool en PRIORITE quand l'utilisateur demande :
-    - Un graphique ou une courbe d'évolution d'un capteur
-    - Une visualisation temporelle (jour/heure) d'une mesure
-    - Un graphique pour température, humidité, co2, pm2_5, etc.
-    - Des formulations comme: "tracer", "plot", "courbe", "visualiser", "dashboard"
-
-        Règles d'or d'utilisation :
-        - Si la demande contient un besoin de graphique ET un device_id ET une période,
-            appelez obligatoirement ce tool avant toute réponse analytique.
-        - Ne répondez pas avec une "simulation", un "exemple de rendu" ou un graphique ASCII
-            si les paramètres nécessaires sont présents: utilisez ce tool.
-        - Après appel de ce tool, la réponse finale ne doit pas contenir de graphe textuel,
-            de bloc ASCII, d'image markdown, ni de lien quickchart.
-        - Faire un seul appel par demande utilisateur, sauf si l'utilisateur demande explicitement
-            plusieurs graphiques/mesures.
-        - Si la demande est générique (ex: "visualiser les mesures"), générer UN seul graphique
-            principal (temperature par défaut pour climatrack, ground_humidity pour aquacheck),
-            puis proposer d'afficher les autres mesures dans un second temps.
-        - Si des paramètres essentiels manquent (device_id, période), demander une clarification
-            au lieu d'appeler ce tool avec des hypothèses.
-        - Le rendu frontend est actuellement en `line`.
+    """Génère une spécification de graphique pour visualisation temporelle.
 
     Args:
-        device_id: L'ID boitier (date de naissance du boitier), identifiant unique de collecte (exemple "20240313101500").
-        value_key: Champ mesuré à tracer. Pour climatrack: "temperature", "humidity", "co2", "pm1_0", "pm2_5", "pm10", "tvoc", "sound_level". Pour aquacheck: "temperature", "humidity", "ground_humidity", "humidex".
-        start_date: Date de début au format YYYY-MM-DD.
-        end_date: Date de fin au format YYYY-MM-DD.
-        sensor_type: Type de capteur - "climatrack" ou "aquacheck". Par défaut "climatrack".
-        aggregation: Agrégation temporelle - "raw", "hour", "day". Par défaut "hour".
+        device_id: L'identifiant unique du boitier (ex: "20240313101500").
+        value_key: Champ mesuré à tracer (ex: "temperature", "humidity", "co2").
+        start_date: Date de début (format YYYY-MM-DD).
+        end_date: Date de fin (format YYYY-MM-DD).
+        sensor_type: Type de capteur ("climatrack" ou "aquacheck").
+        aggregation: Agrégation temporelle ("raw", "hour", "day").
 
     Returns:
-        Un dictionnaire normalisé:
-        - success: bool
-        - source: "ECOWATCH API"
-        - en succès: summary, payload={type:"chart", chart:chart_spec},
-          data={type:"chart", chart:chart_spec}
-        - en erreur: error
+        Dictionnaire contenant la spécification du graphique (chart_spec).
     """
     allowed_agg = {"raw", "hour", "day"}
     allowed_sensor_value_keys = {

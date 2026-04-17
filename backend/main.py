@@ -25,9 +25,13 @@ app.add_middleware(
 
 @app.post("/chat")
 async def chat_endpoint(request: dict = Body(...)):
-    """
-    Accepte un JSON brut: {"messages": [{"role": "...", "content": "..."}]}
-    Renvoie la réponse de l'IA en chunks via HTTP Streaming.
+    """Point d'entrée principal pour la conversation avec l'agent.
+
+    Args:
+        request: Corps de la requête contenant l'historique des messages.
+
+    Returns:
+        Une réponse en streaming (StreamingResponse) au format NDJSON.
     """
     messages = request.get("messages", [])
     return StreamingResponse(
@@ -41,6 +45,10 @@ async def chat_endpoint(request: dict = Body(...)):
 
 @app.get("/")
 def root():
-    """HealthCheck"""
+    """Vérifie l'état de santé du service (HealthCheck).
+
+    Returns:
+        Un dictionnaire indiquant le statut "ok" du service.
+    """
     return {"status": "ok", "service": "jarvis"}
 

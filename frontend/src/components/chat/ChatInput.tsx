@@ -1,11 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { Send } from "lucide-react";
 
+/**
+ * Propriétés du composant ChatInput.
+ * @typedef {Object} ChatInputProps
+ * @property {function(string): void} onSend - Fonction appelée lors de l'envoi d'un message.
+ * @property {boolean} [disabled] - Indique si l'entrée est désactivée (pendant le chargement).
+ */
 interface ChatInputProps {
   onSend: (message: string) => void;
   disabled?: boolean;
 }
 
+/**
+ * Composant de saisie de texte avec auto-redimensionnement et support de la touche Entrée.
+ * @param {ChatInputProps} props - Les propriétés du composant.
+ * @returns {JSX.Element} Le champ de saisie rendu.
+ */
 export function ChatInput({ onSend, disabled }: ChatInputProps) {
   const [value, setValue] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);

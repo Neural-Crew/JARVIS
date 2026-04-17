@@ -3,16 +3,35 @@ import { useCallback, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
 
+/**
+ * Génère un identifiant unique aléatoire.
+ * @returns {string} Un identifiant unique.
+ */
 const generateId = () => Math.random().toString(36).substring(2, 15);
 
+/**
+ * Vérifie si une valeur est un objet (Record).
+ * @param {unknown} value - La valeur à vérifier.
+ * @returns {boolean} Vrai si la valeur est un objet non nul.
+ */
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
+/**
+ * Vérifie si un objet est un payload de type graphique (chart).
+ * @param {unknown} value - La valeur à vérifier.
+ * @returns {boolean} Vrai si le format correspond à ToolPayload de type chart.
+ */
 const isChartToolPayload = (value: unknown): value is ToolPayload => {
   if (!isRecord(value)) return false;
   return value.type === "chart" && value.chart !== undefined;
 };
 
+/**
+ * Vérifie si un objet contient un champ payload valide.
+ * @param {unknown} value - La valeur à vérifier.
+ * @returns {boolean} Vrai si l'enveloppe contient un payload valide.
+ */
 const hasChartPayloadEnvelope = (
   value: unknown
 ): value is { payload: ToolPayload } => {
@@ -20,6 +39,11 @@ const hasChartPayloadEnvelope = (
   return isChartToolPayload(value.payload);
 };
 
+/**
+ * Analyse une chaîne JSON pour extraire un payload d'outil.
+ * @param {string} rawOutput - La sortie brute à analyser.
+ * @returns {ToolPayload | undefined} Le payload extrait ou undefined.
+ */
 const parseToolPayload = (rawOutput: string): ToolPayload | undefined => {
   if (!rawOutput) return undefined;
 
@@ -52,6 +76,11 @@ const parseToolPayload = (rawOutput: string): ToolPayload | undefined => {
   return undefined;
 };
 
+/**
+ * Crée une nouvelle instance de conversation.
+ * @param {string} [title="Nouvelle discussion"] - Le titre de la discussion.
+ * @returns {Conversation} Un nouvel objet Conversation.
+ */
 const createConversation = (title = "Nouvelle discussion"): Conversation => ({
   id: generateId(),
   title,
@@ -60,6 +89,18 @@ const createConversation = (title = "Nouvelle discussion"): Conversation => ({
   updatedAt: new Date(),
 });
 
+/**
+ * Hook personnalisé pour gérer l'état du chat, l'historique et les appels API.
+ * @returns {Object} Un objet contenant l'état du chat et les fonctions de manipulation.
+ * @returns {Conversation[]} returns.conversations - Liste des conversations.
+ * @returns {Conversation | undefined} returns.activeConversation - Conversation active.
+ * @returns {string} returns.activeConversationId - ID de la conversation active.
+ * @returns {Function} returns.setActiveConversationId - Définit la conversation active.
+ * @returns {Function} returns.addMessage - Envoie un message au backend.
+ * @returns {Function} returns.newConversation - Crée une nouvelle conversation.
+ * @returns {Function} returns.deleteConversation - Supprime une conversation.
+ * @returns {boolean} returns.isLoading - État de chargement de la requête.
+ */
 export function useChat() {
   const [conversations, setConversations] = useState<Conversation[]>([
     createConversation("Première discussion"),

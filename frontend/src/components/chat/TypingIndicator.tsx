@@ -1,5 +1,10 @@
 import { Bot } from "lucide-react";
 
+/**
+ * Indicateur visuel d'écriture (typing) de l'assistant.
+ * Affiche une animation de points de suspension.
+ * @returns {JSX.Element} L'indicateur de saisie rendu.
+ */
 export function TypingIndicator() {
   return (
     <div className="flex gap-4 px-4 py-6 max-w-3xl mx-auto">

@@ -132,6 +132,11 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">;
 
+/**
+ * Fonction pour déclencher l'affichage d'un toast.
+ * @param {Toast} props - Les propriétés du toast (titre, description, action).
+ * @returns {Object} Un objet contenant l'id du toast et des fonctions pour le mettre à jour ou le fermer.
+ */
 function toast({ ...props }: Toast) {
   const id = genId();
 
@@ -161,6 +166,10 @@ function toast({ ...props }: Toast) {
   };
 }
 
+/**
+ * Hook permettant d'accéder à l'état des toasts et de déclencher de nouvelles notifications.
+ * @returns {Object} État actuel des toasts et fonctions utilitaires.
+ */
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 

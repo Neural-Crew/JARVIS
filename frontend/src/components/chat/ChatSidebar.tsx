@@ -2,6 +2,17 @@ import { Plus, MessageSquare, Trash2 } from "lucide-react";
 import { Conversation } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
+/**
+ * Propriétés du composant ChatSidebar.
+ * @typedef {Object} ChatSidebarProps
+ * @property {Conversation[]} conversations - Liste de toutes les discussions.
+ * @property {string} activeId - Identifiant de la discussion active.
+ * @property {function(string): void} onSelect - Callback lors du changement de discussion.
+ * @property {function(): void} onNew - Callback pour créer une nouvelle discussion.
+ * @property {function(string): void} onDelete - Callback pour supprimer une discussion.
+ * @property {boolean} isOpen - État d'ouverture du menu (mobile).
+ * @property {function(): void} onClose - Callback pour fermer le menu (mobile).
+ */
 interface ChatSidebarProps {
   conversations: Conversation[];
   activeId: string;
@@ -12,6 +23,12 @@ interface ChatSidebarProps {
   onClose: () => void;
 }
 
+/**
+ * Barre latérale gérant l'historique des conversations.
+ * Permet de naviguer entre les discussions, d'en créer de nouvelles ou d'en supprimer.
+ * @param {ChatSidebarProps} props - Les propriétés du composant.
+ * @returns {JSX.Element} La barre latérale rendue.
+ */
 export function ChatSidebar({
   conversations,
   activeId,

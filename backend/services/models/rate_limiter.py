@@ -1,12 +1,14 @@
+"""Gestion du débit (Rate Limiting) pour les appels aux modèles.
+
+Ce module définit des stratégies de limitation de débit pour éviter de dépasser
+les quotas des fournisseurs (ex: Mistral AI Free Plan).
+"""
+
 from langchain_core.rate_limiters import InMemoryRateLimiter
 
-# Rate limiter pour le free plan Mistral (1 req/sec).
-# Utilise le token bucket natif de LangChain, intégré directement
-# dans le modèle via le paramètre `rate_limiter`.
-# - requests_per_second=0.8 : légèrement sous 1 req/s pour garder une marge
-# - check_every_n_seconds=0.1 : vérifie toutes les 100ms si un token est dispo
-# - max_bucket_size=5 : autorise un petit burst si le bucket s'est rempli
-mistral_rate_limiter = InMemoryRateLimiter(
+# Rate limiter pour le plan gratuit Mistral (1 req/sec).
+# requests_per_second=0.5 : pour plus de sécurité.
+mistral_rate_limiter: InMemoryRateLimiter = InMemoryRateLimiter(
     requests_per_second=0.5,
     check_every_n_seconds=0.1,
     max_bucket_size=1,

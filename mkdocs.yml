@@ -1,0 +1,70 @@
+site_name: Jarvis
+theme:
+  name: material
+  language: fr
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.] # Permet de trouver le package 'backend' depuis la racine
+          options:
+            show_source: true
+            show_root_heading: true
+            show_root_full_path: false
+            show_if_no_docstring: true
+
+nav:
+  - Accueil: index.md
+  - Tutoriels:
+    - Prise en main: tutorials/getting-started.md
+  - Guides:
+    - Utilisation du Chat: how-to/user-guide.md
+    - Configuration: how-to/configuration.md
+    - Déploiement Docker: how-to/docker-deployment.md
+  - Référence:
+    - Backend:
+      - Agent: reference/backend/agent.md
+      - Modèles: reference/backend/models.md
+      - Outils: reference/backend/tools.md
+      - Configuration: reference/backend/config.md
+    - Frontend:
+      - Hooks: reference/frontend/hooks.md
+      - Core (Types/Utils): reference/frontend/core.md
+      - Composants Chat: reference/frontend/components.md
+  - Explications:
+    - Architecture: explanation/architecture.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.magiclink
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.keys
+  - attr_list
+  - md_in_html

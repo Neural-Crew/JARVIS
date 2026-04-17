@@ -7,6 +7,12 @@ import { ChatInput } from "@/components/chat/ChatInput";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { EmptyState } from "@/components/chat/EmptyState";
 
+/**
+ * Page principale de l'application (Index).
+ * Orchestre l'affichage de la barre latérale, de l'historique des messages et du champ de saisie.
+ * Gère également le défilement automatique vers le bas lors de la réception de nouveaux messages.
+ * @returns {JSX.Element} La page d'accueil complète du chat.
+ */
 const Index = () => {
   const {
     conversations,

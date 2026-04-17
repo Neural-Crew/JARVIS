@@ -17,6 +17,12 @@ interface ChatMessageProps {
   message: Message;
 }
 
+/**
+ * Affiche un graphique à partir d'une spécification ToolChart.
+ * @param {Object} props - Les propriétés du composant.
+ * @param {ChartSpec} props.chart - La spécification du graphique à afficher.
+ * @returns {JSX.Element} Le graphique rendu avec Recharts.
+ */
 function ToolChart({ chart }: { chart: ChartSpec }) {
   const metric = chart.y_keys[0];
   const chartConfig: ChartConfig = {
@@ -70,6 +76,12 @@ function ToolChart({ chart }: { chart: ChartSpec }) {
   );
 }
 
+/**
+ * Composant affichant un message individuel dans le chat.
+ * Gère le rendu Markdown, les icônes utilisateur/assistant et les appels d'outils.
+ * @param {ChatMessageProps} props - Les propriétés du composant.
+ * @returns {JSX.Element} Le message rendu avec ses éventuels graphiques et badges d'outils.
+ */
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === "user";
   const toolCalls = message.toolCalls ?? [];
