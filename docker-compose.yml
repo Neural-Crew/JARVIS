@@ -1,0 +1,51 @@
+services:
+  # Service Backend (FastAPI + LangGraph)
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    container_name: jarvis-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    # Note : Assurez-vous d'avoir MISTRAL_API_KEY dans votre fichier .env à la racine
+    restart: unless-stopped
+    networks:
+      - jarvis-network
+
+  # Service Frontend (React + Vite, servi par Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+      args:
+        - VITE_API_BASE= # On laisse vide pour utiliser le proxy Nginx (/chat)
+    container_name: jarvis-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - jarvis-network
+
+  # Service Documentation (MkDocs Material)
+  docs:
+    build:
+      context: .
+      dockerfile: docs.Dockerfile
+    container_name: jarvis-docs
+    ports:
+      - "8008:8000"
+    volumes:
+      - ./docs:/app/docs:ro
+      - ./mkdocs.yml:/app/mkdocs.yml:ro
+      - ./backend:/app/backend:ro
+    restart: unless-stopped
+    networks:
+      - jarvis-network
+
+networks:
+  jarvis-network:
+    driver: bridge

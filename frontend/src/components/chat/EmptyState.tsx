@@ -1,6 +1,11 @@
 import { Bot } from "lucide-react";
 import { motion } from "framer-motion";
 
+/**
+ * État d'affichage vide lorsque aucune discussion n'est active ou commencée.
+ * Affiche un message de bienvenue et une icône de bot.
+ * @returns {JSX.Element} L'état vide rendu.
+ */
 export function EmptyState() {
   return (
     <motion.div

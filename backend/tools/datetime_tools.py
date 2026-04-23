@@ -7,14 +7,10 @@ from langchain_core.tools import tool
 def get_current_datetime() -> dict:
     """Retourne la date et l'heure actuelles du serveur.
 
-    Utilisez ce tool quand l'utilisateur demande:
-    - La date actuelle
-    - L'heure actuelle
-    - Le jour actuel
-    - Le timestamp courant
+    Cette fonction est utile pour répondre aux questions relatives à la date et l'heure courantes.
 
     Returns:
-        Dictionnaire contenant uniquement `datetime_local`.
+        Dictionnaire contenant la date et l'heure au format ISO 8601 local.
     """
     now_local = datetime.now().astimezone()
 

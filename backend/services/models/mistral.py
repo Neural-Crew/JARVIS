@@ -1,3 +1,9 @@
+"""Implémentation du modèle Mistral AI.
+
+Ce module permet d'instancier des modèles ChatMistralAI configurés avec
+des paramètres optimisés (streaming, rate limiting, format JSON).
+"""
+
 from typing import Optional, Any, Dict, Union, Literal, List
 from dotenv import load_dotenv
 from langchain_mistralai import ChatMistralAI
@@ -6,6 +12,9 @@ from .models import ModelFactory
 load_dotenv()
 
 class MistralModel(ModelFactory):
+    """Factory pour les modèles de langage Mistral AI.
+    """
+
     def get_model(
         self,
         model: str = "mistral-large-latest",
@@ -17,9 +26,20 @@ class MistralModel(ModelFactory):
         api_key: Optional[str] = None,
         **kwargs: Any
     ) -> ChatMistralAI:
-        """
-        Implémentation de la factory pour Mistral AI.
-        Référence: https://api.python.langchain.com/en/latest/chat_models/langchain_mistralai.chat_models.ChatMistralAI.html
+        """Configure et retourne une instance de ChatMistralAI.
+
+        Args:
+            model: Identifiant du modèle (ex: "mistral-large-latest").
+            temperature: Température de génération.
+            format: Format de sortie (ex: "json").
+            max_retries: Nombre d'essais en cas d'échec.
+            top_p: Nucleus sampling.
+            disable_streaming: Désactive le streaming si vrai.
+            api_key: Clé API Mistral (utilise l'environnement si None).
+            **kwargs: Autres paramètres passés au constructeur.
+
+        Returns:
+            Une instance configurée de ChatMistralAI.
         """
         model_kwargs = kwargs.pop("model_kwargs", {})
         return ChatMistralAI(

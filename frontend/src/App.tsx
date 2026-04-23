@@ -8,6 +8,11 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+/**
+ * Composant racine de l'application.
+ * Configure les providers (QueryClient, Tooltip, Toaster) et le routage.
+ * @returns {JSX.Element} L'arborescence complète de l'application.
+ */
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>

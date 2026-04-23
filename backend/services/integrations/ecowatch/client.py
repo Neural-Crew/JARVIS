@@ -19,9 +19,8 @@ class EcoWatchAPIError(Exception):
 
 
 class EcoWatchClient:
-    """
-    Client pour l'API ECOWATCH.
-    
+    """Client pour l'API ECOWATCH.
+
     Permet de récupérer les données des capteurs agricoles (aquacheck)
     et de qualité de l'air (climatrack).
     """
@@ -29,14 +28,13 @@ class EcoWatchClient:
     BASE_URL = "https://ecowatch.fr/api"
     
     def __init__(self, api_key: Optional[str] = None):
-        """
-        Initialise le client ECOWATCH.
-        
+        """Initialise le client ECOWATCH.
+
         Args:
-            api_key: Clé API ECOWATCH. Si non fournie, utilise ECOWATCH_API_KEY depuis .env
-        
+            api_key: Clé API ECOWATCH. Si non fournie, utilise ECOWATCH_API_KEY depuis l'environnement.
+
         Raises:
-            ValueError: Si aucune clé API n'est fournie
+            ValueError: Si aucune clé API n'est fournie.
         """
         self.api_key = api_key or os.getenv("ECOWATCH_API_KEY")
         if not self.api_key:
@@ -52,18 +50,17 @@ class EcoWatchClient:
         self.session.headers.update(self.headers)
     
     def _make_request(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Any:
-        """
-        Effectue une requête HTTP GET vers l'API.
-        
+        """Effectue une requête HTTP GET vers l'API.
+
         Args:
-            endpoint: Endpoint relatif à BASE_URL
-            params: Paramètres de requête optionnels
-        
+            endpoint: Endpoint relatif à BASE_URL.
+            params: Paramètres de requête optionnels.
+
         Returns:
-            Réponse JSON décodée
-        
+            Réponse JSON décodée sous forme de dictionnaire ou de liste.
+
         Raises:
-            EcoWatchAPIError: Si la requête échoue
+            EcoWatchAPIError: Si la requête échoue (erreur HTTP ou connexion).
         """
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
         
@@ -85,68 +82,48 @@ class EcoWatchClient:
             raise EcoWatchAPIError(f"Erreur de connexion: {str(e)}") from e
     
     def test_connection(self) -> Dict[str, str]:
-        """
-        Test la connexion à l'API.
-        
+        """Teste la connexion à l'API.
+
         Returns:
-            Dict avec status et message
-        
-        Example:
-            >>> client.test_connection()
-            {'status': 'ok', 'message': 'Connexion au backend réussie'}
+            Dictionnaire contenant le statut ("ok") et un message de succès.
         """
         return self._make_request("test-connection")
     
     def get_devices(self, table: str) -> List[str]:
-        """
-        Récupère la liste des IDs de devices pour une table.
-        
+        """Récupère la liste des identifiants de boitiers pour une table donnée.
+
         Args:
-            table: Nom de la table ('aquacheck' ou 'climatrack')
-        
+            table: Nom de la table ('aquacheck' ou 'climatrack').
+
         Returns:
-            Liste des IDs de devices
-        
+            Liste des identifiants (device IDs).
+
         Raises:
-            EcoWatchAPIError: Si la table est invalide
-        
-        Example:
-            >>> client.get_devices("aquacheck")
-            ['20250314140500', '20250513115530', ...]
+            EcoWatchAPIError: Si l'API renvoie une erreur ou si la table est invalide.
         """
         return self._make_request("b2b/devices", params={"table": table})
     
     def get_device_data(self, table: str, device_id: str) -> List[Dict[str, Any]]:
-        """
-        Récupère toutes les données historiques d'un device.
-        
+        """Récupère l'historique complet des données d'un boitier.
+
         Args:
-            table: Nom de la table ('aquacheck' ou 'climatrack')
-            device_id: ID du device
-        
+            table: Nom de la table ('aquacheck' ou 'climatrack').
+            device_id: Identifiant unique du boitier.
+
         Returns:
-            Liste des mesures avec tous les champs
-        
-        Example:
-            >>> client.get_device_data("aquacheck", "20250314140500")
-            [{'id': 4626, 'ID_boitier': '20250314140500', ...}, ...]
+            Liste de dictionnaires représentant les mesures.
         """
         return self._make_request(f"b2b/data/{table}/{device_id}")
     
     def get_latest_data(self, table: str, device_id: str) -> Dict[str, Any]:
-        """
-        Récupère la dernière mesure d'un device.
-        
+        """Récupère la toute dernière mesure d'un boitier.
+
         Args:
-            table: Nom de la table ('aquacheck' ou 'climatrack')
-            device_id: ID du device
-        
+            table: Nom de la table ('aquacheck' ou 'climatrack').
+            device_id: Identifiant unique du boitier.
+
         Returns:
-            Dict avec la dernière mesure
-        
-        Example:
-            >>> client.get_latest_data("climatrack", "20240313101500")
-            {'id': 134158, 'temperature': 27.26, 'co2': 739, ...}
+            Dictionnaire contenant la mesure la plus récente.
         """
         return self._make_request(f"b2b/data/{table}/{device_id}/latest")
     
@@ -157,26 +134,16 @@ class EcoWatchClient:
         start_date: str,
         end_date: str
     ) -> List[Dict[str, Any]]:
-        """
-        Récupère les données filtrées par période.
-        
+        """Récupère les données d'un boitier filtrées sur une période donnée.
+
         Args:
-            table: Nom de la table ('aquacheck' ou 'climatrack')
-            device_id: ID du device
-            start_date: Date de début au format YYYY-MM-DD
-            end_date: Date de fin au format YYYY-MM-DD
-        
+            table: Nom de la table ('aquacheck' ou 'climatrack').
+            device_id: Identifiant unique du boitier.
+            start_date: Date de début (YYYY-MM-DD).
+            end_date: Date de fin (YYYY-MM-DD).
+
         Returns:
-            Liste des mesures dans la période
-        
-        Example:
-            >>> client.get_filtered_data(
-            ...     "aquacheck",
-            ...     "20250314140500",
-            ...     "2025-06-16",
-            ...     "2025-06-17"
-            ... )
-            [{'id': 4583, 'timestamp': '2025-06-16T07:42:28.000Z', ...}, ...]
+            Liste de dictionnaires représentant les mesures sur la période.
         """
         params = {
             "start": start_date,

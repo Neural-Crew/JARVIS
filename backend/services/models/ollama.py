@@ -3,6 +3,9 @@ from langchain_ollama import ChatOllama
 from .models import ModelFactory
 
 class OllamaModel(ModelFactory):
+    """Implémentation de la factory pour les modèles hébergés localement via Ollama.
+    """
+
     def get_model(
         self,
         model: str = "qwen3:14b",
@@ -20,6 +23,27 @@ class OllamaModel(ModelFactory):
         reasoning: bool = False,
         **kwargs: Any
     ) -> ChatOllama:
+        """Configure et retourne un modèle Ollama.
+
+        Args:
+            model: Le nom du modèle local (ex: "qwen3:14b", "llama3").
+            temperature: La température pour la génération.
+            format: Le format de sortie (ex: "json").
+            keep_alive: Durée de maintien du modèle en mémoire.
+            num_ctx: Taille de la fenêtre de contexte.
+            num_predict: Nombre maximum de tokens à générer.
+            seed: Graine aléatoire pour la reproductibilité.
+            stop: Séquences d'arrêt pour la génération.
+            top_k: Limite le vocabulaire aux K tokens les plus probables.
+            top_p: Nucleus sampling.
+            disable_streaming: Désactive le streaming si vrai.
+            validate_model_on_init: Vérifie l'existence du modèle au démarrage.
+            reasoning: Active les capacités de raisonnement si supporté.
+            **kwargs: Autres paramètres passés à ChatOllama.
+
+        Returns:
+            Une instance configurée de ChatOllama.
+        """
         
         return ChatOllama(
             model=model,

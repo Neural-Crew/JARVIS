@@ -2,6 +2,10 @@ import * as React from "react";
 
 const MOBILE_BREAKPOINT = 768;
 
+/**
+ * Hook détectant si l'affichage actuel est de type mobile (largeur < 768px).
+ * @returns {boolean} Vrai si l'utilisateur est sur mobile.
+ */
 export function useIsMobile() {
   const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined);
 

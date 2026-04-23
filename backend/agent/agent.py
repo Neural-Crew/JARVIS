@@ -24,7 +24,17 @@ load_dotenv()
 _agent = None
 
 
-def _get_agent():
+def _get_agent() -> "CompiledStateGraph":
+    """Initialise et retourne l'agent LangChain.
+
+    Configure le modèle Mistral avec la clé API et les outils nécessaires.
+
+    Returns:
+        L'agent LangChain (graphe LangGraph) prêt à l'emploi.
+
+    Raises:
+        RuntimeError: Si la variable d'environnement MISTRAL_API_KEY n'est pas définie.
+    """
     global _agent
     if _agent is None:
         api_key = os.getenv("MISTRAL_API_KEY")
@@ -45,15 +55,23 @@ def _get_agent():
     return _agent
 
 
-async def stream_chat(history: list[dict]):
-    """
-    Gère la conversation, transforme l'historique brut en messages LangChain, invoque l'agent et stream la réponse token par token.
+from typing import AsyncGenerator
+
+
+async def stream_chat(history: list[dict]) -> AsyncGenerator[str, None]:
+    """Gère la conversation et stream la réponse de l'agent.
+
+    Transforme l'historique brut en messages LangChain, invoque l'agent
+    et renvoie la réponse token par token au format NDJSON.
 
     Args:
-        history (list[dict]): Liste des messages au format `{"role": "user"|"assistant", "content": "..."}`.
+        history: Liste des messages de la conversation.
 
     Yields:
-        str: Les fragments de texte générés par le modèle (tokens).
+        Lignes au format NDJSON contenant les tokens ou les événements de l'agent.
+
+    Raises:
+        Exception: En cas d'erreur lors du chargement du prompt système ou du streaming.
     """
 
     # Charge le prompt système
