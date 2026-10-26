@@ -1,0 +1,78 @@
+{
+  "extraKnownMarketplaces": {
+    "socle": {
+      "source": {
+        "source": "github",
+        "repo": "JazzNeusta/socle-claude"
+      },
+      "autoUpdate": true
+    }
+  },
+  "enabledPlugins": {
+    "socle@socle": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(node -c:*)",
+      "Bash(node --check:*)",
+      "Bash(node _dev/outils/:*)",
+      "Bash(node _dev/recette/:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/projet.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/verifier-tout.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/recette.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/uat.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/session.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/verrou.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/pilote.js:*)",
+      "Bash(node *.claude/plugins/*/socle/*/outils/socle-modifie.js:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(date:*)",
+      "Bash(diff:*)",
+      "Bash(grep:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git branch:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git fetch:*)",
+      "Bash(poetry install:*)",
+      "Bash(poetry run pytest:*)",
+      "Bash(poetry run ruff:*)",
+      "Bash(poetry run mypy:*)",
+      "Bash(poetry show:*)",
+      "Bash(poetry check:*)"
+    ],
+    "deny": [
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Bash(cat *.env*)",
+      "Bash(head *.env*)",
+      "Bash(tail *.env*)",
+      "Bash(grep *.env*)",
+      "Bash(less *.env*)",
+      "Bash(more *.env*)",
+      "Bash(sed *.env*)",
+      "Bash(awk *.env*)",
+      "Bash(source *.env*)",
+      "Bash(git stash:*)",
+      "Bash(git add -A:*)",
+      "Bash(git add --all:*)",
+      "Bash(git add .:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -f:*)",
+      "Bash(poetry publish:*)"
+    ]
+  }
+}
