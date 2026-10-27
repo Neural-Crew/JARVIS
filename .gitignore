@@ -68,3 +68,25 @@ frontend/node_modules/
 !frontend/src/lib/
 !frontend/src/lib/**
 _dev/sorties/
+
+# --- Secrets (bloc commun socle) : jamais dans git ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+Secrets.h
+secrets.h
+!Secrets.example.h
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+.clasprc.json
+.claude/settings.local.json
+credentials.json
+token.json
