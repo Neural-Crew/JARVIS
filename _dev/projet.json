@@ -1,0 +1,102 @@
+{
+  "$comment": "Description d'un projet pour le socle. Copié en _dev/projet.json par outils/installer.js, puis ajusté à la main. Toute clé absente = étape sautée, jamais devinée.",
+  "socleVersion": "1",
+  "nom": "JARVIS",
+  "stack": "python",
+  "prefixeEcopilot": null,
+  "branches": {
+    "reference": null,
+    "environnements": null,
+    "protegees": [
+      "main"
+    ]
+  },
+  "ports": {
+    "front": 8080,
+    "api": 8000,
+    "cdp": 10232,
+    "cockpit": 7796,
+    "docs": 8008
+  },
+  "commandes": {
+    "installer": "poetry install --no-interaction && npm --prefix frontend ci --no-audit --no-fund",
+    "verifier": "node {outils}/verifier-tout.js && npm --prefix frontend run lint",
+    "tester": "ECOWATCH_API_KEY= MISTRAL_API_KEY= poetry run pytest backend/tests --ignore=backend/tests/models -q -p no:cacheprovider && npm --prefix frontend run test",
+    "construire": "npm --prefix frontend run build",
+    "lancer": {
+      "api": "poetry run uvicorn backend.main:app --reload",
+      "front": "npm --prefix frontend run dev"
+    },
+    "deployer": {
+      "INT": null,
+      "VAL": null,
+      "PROD": null
+    }
+  },
+  "recette": {
+    "mode": null,
+    "lancer": null,
+    "demander": null,
+    "suites": null,
+    "api": null
+  },
+  "version": {
+    "fichier": null,
+    "format": null
+  },
+  "code": {
+    "racines": [
+      "backend",
+      "frontend/src"
+    ],
+    "syntaxe": null,
+    "prefixesDoc": [
+      "_dev",
+      "backend",
+      "docs",
+      "frontend"
+    ],
+    "generes": [
+      "poetry.lock",
+      "package-lock.json",
+      "frontend/package-lock.json",
+      "frontend/bun.lockb"
+    ],
+    "zoneCommit": [
+      "backend",
+      "frontend/src",
+      "frontend/public",
+      "docs",
+      "_dev",
+      "README.md",
+      "mkdocs.yml"
+    ]
+  },
+  "registres": {
+    "bugs": null,
+    "codeMort": null,
+    "go": null,
+    "questions": null,
+    "chantiers": null
+  },
+  "sorties": "_dev/sorties",
+  "roles": {
+    "orchestre": "orchestre-JARVIS",
+    "ouvriere": "ouvriere-JARVIS",
+    "complement": null
+  },
+  "uat": {
+    "source": null,
+    "scenarios": null,
+    "compteTest": null
+  },
+  "reviewer": {
+    "criteres": null
+  },
+  "risques": [
+    "lancer backend/tests/integrations avec une vraie ECOWATCH_API_KEY : appelle l'API de prod https://ecowatch.fr/api",
+    "appeler /chat ou les tests Mistral avec une vraie MISTRAL_API_KEY : consomme l'API payante (limiteur de taux dans services/models/rate_limiter.py)",
+    "docker compose up sur un serveur : conteneurs en restart unless-stopped qui chargent le .env racine"
+  ],
+  "modeles": {}
+}
